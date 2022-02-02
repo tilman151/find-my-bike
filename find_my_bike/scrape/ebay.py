@@ -1,3 +1,4 @@
+import logging
 import warnings
 from typing import Optional, Dict, List
 
@@ -8,6 +9,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 
 SITE_URL = "https://www.ebay-kleinanzeigen.de/"
+
+logger = logging.getLogger(__name__)
 
 
 class EbayImageScraper:
@@ -42,12 +45,12 @@ class EbayImageScraper:
         return items
 
     def _open_website(self) -> None:
-        print(f"Open {SITE_URL}")
+        logger.info(f"Open {SITE_URL}")
         self.driver.get(SITE_URL)
         self._reject_cookies()
 
     def _reject_cookies(self) -> None:
-        print("Reject cookies")
+        logger.info("Reject cookies")
         options_btn = WebDriverWait(self.driver, 10).until(
             lambda d: d.find_element(By.ID, "gdpr-banner-cmp-button")
         )
@@ -60,7 +63,7 @@ class EbayImageScraper:
         continue_btn.click()
 
     def _search(self, query: str, location: Optional[str] = None) -> None:
-        print(f"Search '{query}' in '{location}'")
+        logger.info(f"Search '{query}' in '{location}'")
         search_bar = self.driver.find_element(By.ID, "site-search-query")
         search_bar.send_keys(query)
         if location is not None:
@@ -69,7 +72,7 @@ class EbayImageScraper:
         search_bar.send_keys(Keys.ENTER)
 
     def _get_items(self, num) -> List[Dict[str, str]]:
-        print(f"Retrieve {num} items")
+        logger.info(f"Retrieve {num} items")
         items = []
         while len(items) < num:
             items.extend(self._get_items_from_page())
@@ -82,6 +85,7 @@ class EbayImageScraper:
 
     def _get_items_from_page(self) -> List[Dict[str, str]]:
         ads = self.driver.find_elements(By.CLASS_NAME, "aditem")
+        logger.debug(f"Get {len(ads)} items from page")
         items = []
         for aditem in ads:
             image = aditem.find_element(By.CLASS_NAME, "imagebox")
@@ -90,10 +94,13 @@ class EbayImageScraper:
             url = title_tag.get_attribute("href")
             if image_url is not None:
                 items.append({"image_url": image_url, "url": url})
+            else:
+                logger.debug(f"Skip '{url}' without image")
 
         return items
 
     def _navigate_next_result_page(self) -> None:
+        logger.debug("Navigate to next page")
         next_page_btn = self.driver.find_element(
             By.XPATH,
             "//span[@class='pagination-current']/following-sibling::a[1]",
