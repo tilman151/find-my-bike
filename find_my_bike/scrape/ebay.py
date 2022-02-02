@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional, Dict, List
 
 from selenium import webdriver
@@ -35,6 +36,8 @@ class EbayImageScraper:
         self._open_website()
         self._search(query, location)
         items = self._get_items(num)
+        if len(items) < num:
+            warnings.warn(f"Could only fetch {len(items)} items")
 
         return items
 

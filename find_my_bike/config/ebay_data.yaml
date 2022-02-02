@@ -1,0 +1,5 @@
+dataset_name: ebay
+query: Fahrrad
+location: Berlin
+num_train_images: 800
+num_val_images: 200
