@@ -11,10 +11,12 @@ webdriver-manager = "^3.5.2"
 pytorch-lightning = "^1.5.9"
 tqdm = "^4.62.3"
 responses = "^0.17.0"
+hydra-core = "^1.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 black = {extras = ["d"], version = "^22.1.0"}
+pigeon-jupyter = "^0.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

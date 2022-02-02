@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 import pytest
@@ -27,14 +28,15 @@ def image_urls():
 
 
 @responses.activate
-def test_download_images(image_urls):
+def test_download_images(image_urls, tmpdir):
     mock_open = mock.mock_open()
     with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        download_images(image_urls, "output_folder")
+        download_images(image_urls, os.path.join(tmpdir, "data"))
     mock_open.assert_has_calls(
         [
-            mock.call("output_folder/00000.jpg", mode="wb"),
-            mock.call("output_folder/00001.jpg", mode="wb"),
+            mock.call(os.path.join(tmpdir, "data", "00000.jpg"), mode="wb"),
+            mock.call(os.path.join(tmpdir, "data", "00001.jpg"), mode="wb"),
+            mock.call(os.path.join(tmpdir, "data", "meta.json"), mode="wt"),
         ],
         any_order=True,
     )

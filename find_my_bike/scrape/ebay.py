@@ -39,10 +39,12 @@ class EbayImageScraper:
         return items
 
     def _open_website(self) -> None:
+        print(f"Open {SITE_URL}")
         self.driver.get(SITE_URL)
         self._reject_cookies()
 
     def _reject_cookies(self) -> None:
+        print("Reject cookies")
         options_btn = WebDriverWait(self.driver, 10).until(
             lambda d: d.find_element(By.ID, "gdpr-banner-cmp-button")
         )
@@ -55,6 +57,7 @@ class EbayImageScraper:
         continue_btn.click()
 
     def _search(self, query: str, location: Optional[str] = None) -> None:
+        print(f"Search '{query}' in '{location}'")
         search_bar = self.driver.find_element(By.ID, "site-search-query")
         search_bar.send_keys(query)
         if location is not None:
@@ -63,6 +66,7 @@ class EbayImageScraper:
         search_bar.send_keys(Keys.ENTER)
 
     def _get_items(self, num) -> List[Dict[str, str]]:
+        print(f"Retrieve {num} items")
         items = []
         while len(items) < num:
             items.extend(self._get_items_from_page())
@@ -81,7 +85,8 @@ class EbayImageScraper:
             image_url = image.get_attribute("data-imgsrc")
             title_tag = aditem.find_element(By.XPATH, "div[2]/div[2]/h2/a")
             url = title_tag.get_attribute("href")
-            items.append({"image_url": image_url, "url": url})
+            if image_url is not None:
+                items.append({"image_url": image_url, "url": url})
 
         return items
 
