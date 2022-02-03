@@ -3,9 +3,52 @@ import os
 from typing import Tuple, Callable, Dict, List, Any, Optional
 
 import torch
-from torch.utils.data import Dataset
+from pytorch_lightning import LightningDataModule
+from torch.utils.data import Dataset, DataLoader
 from torchvision.datasets.folder import pil_loader
 from torchvision.transforms import functional
+
+
+class EbayDataModule(LightningDataModule):
+    def __init__(
+        self,
+        dataset_path: str,
+        aspects: List[str],
+        batch_size: int,
+        train_transforms: Optional[Callable] = None,
+        num_workers: int = 4,
+    ) -> None:
+        super().__init__()
+
+        self.dataset_path = dataset_path
+        self.aspects = aspects
+        self.batch_size = batch_size
+        self.train_transforms = train_transforms
+        self.num_workers = num_workers
+
+        self.save_hyperparameters()
+
+        self.train_data = EbayDataset(
+            f"{dataset_path}_train", aspects, train_transforms
+        )
+        self.val_data = EbayDataset(f"{dataset_path}_val", aspects)
+
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.train_data,
+            batch_size=self.batch_size,
+            shuffle=True,
+            pin_memory=True,
+            num_workers=self.num_workers,
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_data,
+            batch_size=self.batch_size,
+            pin_memory=True,
+            num_workers=self.num_workers,
+        )
 
 
 class EbayDataset(Dataset):
@@ -62,3 +105,6 @@ class EbayDataset(Dataset):
         labels = torch.tensor(labels, dtype=torch.long)
 
         return img, labels
+
+    def __len__(self) -> int:
+        return len(self.meta)
