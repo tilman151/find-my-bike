@@ -5,8 +5,6 @@ from typing import List, Dict
 import requests
 from tqdm import tqdm
 
-from torch.utils.data import Dataset
-
 
 logger = logging.getLogger(__name__)
 

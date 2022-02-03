@@ -5,7 +5,7 @@ import pytest
 import responses
 from responses import matchers
 
-from find_my_bike.dataset.image_dataset import download_images
+from find_my_bike.dataset.utils import download_images
 
 
 @pytest.fixture
