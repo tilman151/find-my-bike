@@ -6,7 +6,8 @@ import torch
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision.datasets.folder import pil_loader
-from torchvision.transforms import functional
+from torchvision import transforms
+from PIL import Image
 
 
 class EbayDataModule(LightningDataModule):
@@ -33,6 +34,10 @@ class EbayDataModule(LightningDataModule):
             f"{dataset_path}_train", aspects, train_transforms
         )
         self.val_data = EbayDataset(f"{dataset_path}_val", aspects)
+
+    @property
+    def classes_per_aspect(self) -> Dict[str, int]:
+        return self.train_data.classes_per_aspect
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -61,10 +66,17 @@ class EbayDataset(Dataset):
     ) -> None:
         self.dataset_path = dataset_path
         self.aspects = aspects
-        self.transform = transform or functional.to_tensor
+        self.transform = transform or self._get_default_transform()
 
         self.meta = self._load_meta_file()
         self._classes = self._get_classes()
+
+    def _get_default_transform(self):
+        return transforms.Compose([UnifyingPad(200, 200), transforms.ToTensor()])
+
+    @property
+    def classes_per_aspect(self):
+        return {aspect: len(classes) for aspect, classes in self._classes.items()}
 
     def _load_meta_file(self) -> List[Tuple[str, Dict[str, Any]]]:
         meta_path = os.path.join(self.dataset_path, "meta.json")
@@ -109,3 +121,15 @@ class EbayDataset(Dataset):
 
     def __len__(self) -> int:
         return len(self.meta)
+
+
+class UnifyingPad:
+    def __init__(self, x: int, y: int):
+        self.size = x, y
+
+    def __call__(self, img: Image) -> Image:
+        padded = Image.new("RGB", self.size)
+        paste_pos = self.size[0] - img.size[0], self.size[1] - img.size[1]
+        padded.paste(img, paste_pos)
+
+        return padded
