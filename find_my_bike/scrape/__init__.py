@@ -1,1 +1,1 @@
-from ebay import EbayImageScraper
+from .ebay import EbayImageScraper

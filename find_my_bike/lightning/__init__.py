@@ -1,1 +1,1 @@
-from bike_classifier import MultiAspectHead, BikeClassifier
+from .bike_classifier import Encoder, MultiAspectHead, BikeClassifier
