@@ -10,6 +10,7 @@ from torchvision.transforms import functional
 
 
 class EbayDataModule(LightningDataModule):
+    # TODO: Add ignore index -1 for missing annotation
     def __init__(
         self,
         dataset_path: str,
