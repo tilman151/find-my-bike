@@ -1,9 +1,10 @@
-from typing import Type, Tuple, Dict, List
+from typing import Type, Tuple, Dict, List, Callable
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
 from torchmetrics.functional import accuracy
+from torchvision.models.feature_extraction import create_feature_extractor
 
 
 class MultiAspectHead(nn.Module):
@@ -27,6 +28,17 @@ class MultiAspectHead(nn.Module):
 
     def forward(self, inputs: torch.Tensor) -> List[torch.Tensor]:
         return [m(inputs) for m in self.heads]
+
+
+class Encoder(nn.Module):
+    def __init__(self, encoder: nn.Module, output_node: str):
+        super().__init__()
+
+        self.encoder = create_feature_extractor(encoder, [output_node])
+        self.output_node = output_node
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        return torch.flatten(self.encoder(inputs)[self.output_node], start_dim=1)
 
 
 def _accuracy(
