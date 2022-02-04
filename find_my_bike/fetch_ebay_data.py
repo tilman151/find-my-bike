@@ -3,8 +3,8 @@ import os
 import hydra
 from omegaconf import DictConfig
 
-from find_my_bike.dataset.utils import download_images
-from find_my_bike.scrape.ebay import EbayImageScraper
+from find_my_bike.dataset import download_images
+from find_my_bike.scrape import EbayImageScraper
 
 DATA_ROOT = os.path.join(os.path.dirname(__file__), "..", "data")
 
