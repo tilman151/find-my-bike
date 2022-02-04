@@ -1,0 +1,24 @@
+data:
+  _target_: find_my_bike.dataset.EbayDataModule
+  dataset_path: /home/tilman/Programming/find-my-bike/data/ebay
+  aspects: [bike]
+  batch_size: 64
+
+model:
+  _target_: find_my_bike.lightning.BikeClassifier
+  encoder:
+    _target_: find_my_bike.lightning.Encoder
+    encoder:
+      _target_: torchvision.models.resnet18
+      pretrained: true
+    output_node: avgpool
+  head:
+    _target_: find_my_bike.lightning.MultiAspectHead
+    aspects: ???
+    in_features: 512
+  lr: 0.001
+  encoder_lr_factor: 0.0
+
+trainer:
+  max_epochs: 100
+  log_every_n_steps: 1
