@@ -40,6 +40,10 @@ class Encoder(nn.Module):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         return torch.flatten(self.encoder(inputs)[self.output_node], start_dim=1)
 
+    @property
+    def name(self) -> str:
+        return self.encoder.__class__.__name__
+
 
 def _accuracy(
     preds: torch.Tensor, labels: torch.Tensor, ignore_index: int = -1
@@ -67,6 +71,15 @@ class BikeClassifier(pl.LightningModule):
         self.encoder_lr_factor = encoder_lr_factor
         self.optim_type = optim
         self.ce_loss = nn.CrossEntropyLoss(ignore_index=-1)
+
+        self.save_hyperparameters(
+            {
+                "encoder": self.encoder.name,
+                "lr": self.lr,
+                "encoder_lr_factor": self.encoder_lr_factor,
+                "optim": self.optim_type.__name__,
+            }
+        )
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optim_type(
