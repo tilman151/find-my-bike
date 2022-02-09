@@ -1,5 +1,4 @@
 import hydra
-import pytorch_lightning as pl
 from omegaconf import DictConfig
 
 
@@ -9,7 +8,7 @@ def train_ebay(config: DictConfig):
     model = hydra.utils.instantiate(
         config.model, head={"aspects": dm.classes_per_aspect}
     )
-    trainer = pl.Trainer(**config.trainer)
+    trainer = hydra.utils.instantiate(config.trainer)
     trainer.fit(model, datamodule=dm)
 
 

@@ -14,7 +14,7 @@ class MultiAspectHead(nn.Module):
     def __init__(self, aspects: Dict[str, int], in_features: int):
         super().__init__()
 
-        self._aspects = aspects
+        self._aspects = dict(aspects)
         self.in_features = in_features
         self.heads = self._build_heads()
 
@@ -39,13 +39,10 @@ class Encoder(nn.Module):
 
         self.encoder = create_feature_extractor(encoder, [output_node])
         self.output_node = output_node
+        self.name = self.encoder.__class__.__name__
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         return torch.flatten(self.encoder(inputs)[self.output_node], start_dim=1)
-
-    @property
-    def name(self) -> str:
-        return self.encoder.__class__.__name__
 
 
 def _accuracy(
@@ -99,7 +96,7 @@ class BikeClassifier(pl.LightningModule):
             lr=self.lr,
         )
 
-    def forward(self, img: torch.Tensor) -> torch.Tensor:
+    def forward(self, img: torch.Tensor) -> List[torch.Tensor]:
         features = self.encoder(img)
         preds = self.head(features)
 

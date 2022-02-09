@@ -26,8 +26,9 @@ class TorchJitCheckpointIO(CheckpointIO):
         del checkpoint["jit_module"]
         TorchCheckpointIO().save_checkpoint(checkpoint, path, storage_options)
 
-        folder_path = os.path.dirname(path)
-        file_path = os.path.join(folder_path, "jit_module.pth")
+        folder_path, file_name = os.path.split(path)
+        file_name = "jit-" + file_name.replace(".ckpt", ".pth")
+        file_path = os.path.join(folder_path, file_name)
         torch.jit.save(jit_module, file_path)
 
     def load_checkpoint(
@@ -58,8 +59,9 @@ class TorchJitCheckpointIO(CheckpointIO):
         Args:
             path: Path to checkpoint
         """
-        folder_path = os.path.dirname(path)
-        file_path = os.path.join(folder_path, "jit_module.pth")
+        folder_path, file_name = os.path.split(path)
+        file_name = "jit-" + file_name.replace(".ckpt", ".pth")
+        file_path = os.path.join(folder_path, file_name)
         os.remove(file_path)
 
         TorchCheckpointIO().remove_checkpoint(path)

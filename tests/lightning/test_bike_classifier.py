@@ -7,6 +7,7 @@ from torch import nn
 from find_my_bike.lightning.bike_classifier import (
     MultiAspectHead,
     BikeClassifier,
+    Encoder,
     _accuracy,
 )
 
@@ -23,7 +24,9 @@ def head(aspects):
 
 @pytest.fixture
 def encoder():
-    return nn.Linear(16, 8)
+    layers = nn.Sequential()
+    layers.add_module("linear", nn.Linear(16, 8))
+    return Encoder(layers, "linear")
 
 
 @pytest.fixture
@@ -85,3 +88,10 @@ def test_bike_classifier_val_step(aspects, classifier):
             mock.call("val/b_acc", mock.ANY),
         ]
     )
+
+
+def test_bike_classifier_on_checkpoint(classifier):
+    checkpoint = {}
+    classifier.on_save_checkpoint(checkpoint)
+    assert "jit_module" in checkpoint
+    assert isinstance(checkpoint["jit_module"], torch.jit.ScriptModule)

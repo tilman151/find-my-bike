@@ -20,6 +20,7 @@ model:
   encoder_lr_factor: 0.0
 
 trainer:
+  _target_: pytorch_lightning.Trainer
   max_epochs: 100
   log_every_n_steps: 1
   plugins:
