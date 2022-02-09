@@ -22,3 +22,5 @@ model:
 trainer:
   max_epochs: 100
   log_every_n_steps: 1
+  plugins:
+    _target_: find_my_bike.lightning.utils.TorchJitCheckpointIO

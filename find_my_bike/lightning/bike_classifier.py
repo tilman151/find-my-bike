@@ -1,7 +1,10 @@
-from typing import Type, Tuple, Dict, List, Callable
+import os.path
+from typing import Type, Tuple, Dict, List, Callable, Union, IO, Optional, Any
 
+import hydra.utils
 import pytorch_lightning as pl
 import torch
+from omegaconf import OmegaConf
 from torch import nn
 from torchmetrics.functional import accuracy
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -80,6 +83,9 @@ class BikeClassifier(pl.LightningModule):
                 "optim": self.optim_type.__name__,
             }
         )
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        checkpoint["jit_module"] = self.to_torchscript()
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optim_type(
