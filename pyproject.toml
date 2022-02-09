@@ -10,14 +10,15 @@ selenium = "^4.1"
 webdriver-manager = "^3.5.2"
 pytorch-lightning = "^1.5.9"
 tqdm = "^4.62.3"
-responses = "^0.17.0"
 hydra-core = "^1.1.1"
 torchvision = "^0.11.3"
+label-studio-ml = {git = "https://github.com/heartexlabs/label-studio-ml-backend"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2"
+pytest = "^7.0"
+responses = "^0.18.0"
 black = {extras = ["d"], version = "^22.1.0"}
-pigeon-jupyter = "^0.1.0"
+label-studio = "^1.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
