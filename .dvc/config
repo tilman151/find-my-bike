@@ -1,0 +1,4 @@
+['remote "gdrive"']
+    url = SECRET
+    gdrive_client_id = SECRET
+    gdrive_client_secret = SECRET
