@@ -17,7 +17,7 @@ model:
     aspects: ???
     in_features: 512
   lr: 0.001
-  encoder_lr_factor: 0.0
+  encoder_lr_factor: 0.1
 
 trainer:
   _target_: pytorch_lightning.Trainer
