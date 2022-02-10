@@ -38,7 +38,7 @@ class EbayImageScraper:
     ) -> List[Dict[str, str]]:
         self._open_website()
         self._search(query, location)
-        items = self._get_items(num)
+        items = self._get_items(num, query, location)
         if len(items) < num:
             warnings.warn(f"Could only fetch {len(items)} items")
 
@@ -71,11 +71,13 @@ class EbayImageScraper:
             location_bar.send_keys(location)
         search_bar.send_keys(Keys.ENTER)
 
-    def _get_items(self, num) -> List[Dict[str, str]]:
+    def _get_items(
+        self, num: int, query: str, location: Optional[str] = None
+    ) -> List[Dict[str, str]]:
         logger.info(f"Retrieve {num} items")
         items = []
         while len(items) < num:
-            items.extend(self._get_items_from_page())
+            items.extend(self._get_items_from_page(query, location))
             try:
                 self._navigate_next_result_page()
             except NoSuchElementException:
@@ -83,7 +85,9 @@ class EbayImageScraper:
 
         return items[:num]
 
-    def _get_items_from_page(self) -> List[Dict[str, str]]:
+    def _get_items_from_page(
+        self, query: str, location: Optional[str] = None
+    ) -> List[Dict[str, str]]:
         ads = self.driver.find_elements(By.CLASS_NAME, "aditem")
         logger.debug(f"Get {len(ads)} items from page")
         items = []
@@ -93,7 +97,14 @@ class EbayImageScraper:
             title_tag = aditem.find_element(By.XPATH, "div[2]/div[2]/h2/a")
             url = title_tag.get_attribute("href")
             if image_url is not None:
-                items.append({"image_url": image_url, "url": url})
+                items.append(
+                    {
+                        "image_url": image_url,
+                        "url": url,
+                        "query": query,
+                        "location": location,
+                    }
+                )
             else:
                 logger.debug(f"Skip '{url}' without image")
 

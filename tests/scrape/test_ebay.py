@@ -26,3 +26,7 @@ def test_retrieving_items():
     with EbayImageScraper() as scraper:
         items = scraper.get_items("Fahrrad", "Berlin", 30)
     assert len(items) == 30
+    assert "url" in items[0]
+    assert "image_url" in items[0]
+    assert "query" in items[0]
+    assert "location" in items[0]
