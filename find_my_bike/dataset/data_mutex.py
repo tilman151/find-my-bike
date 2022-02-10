@@ -13,19 +13,20 @@ def data_mutex(path_a: str, path_b: str) -> None:
     meta_a = load_meta(path_a)
     meta_b = load_meta(path_b)
     product = itertools.product(meta_a.keys(), meta_b.keys())
+    self_check = path_a == path_b
     duplicates = []
     for img_file_a, img_file_b in tqdm(product, total=len(meta_a) * len(meta_b)):
+        if self_check and (img_file_a == img_file_b):
+            continue
         img_a = _load_image(path_a, img_file_a)
         img_b = _load_image(path_b, img_file_b)
-        if not img_a.shape == img_b.shape:
-            continue
-        elif np.sum(img_a - img_b) == 0:
+        if (img_a.shape == img_b.shape) and (np.sum(img_a - img_b) == 0):
             duplicates.append(f"{path_a}: {img_file_a} is {path_b}: {img_file_b}")
 
     print(*duplicates, sep="\n")
 
 
-@lru_cache(maxsize=300)
+@lru_cache(maxsize=1000)
 def _load_image(path, img_file_name):
     img = Image.open(os.path.join(path, img_file_name))
     img = np.array(img)
