@@ -8,12 +8,12 @@ def labelstudio2meta(
 ) -> Dict[str, Dict[str, Any]]:
     for anno_info in annotations:
         image_file = os.path.basename(anno_info["image"])
-        label = anno_info["bike"].lower().replace(" ", "_")
-        if not label == meta[image_file]["labels"]["bike"]:
-            print(
-                f"Image {image_file} differs: Meta({meta[image_file]['labels']['bike']}) vs. LS({label})"
-            )
-        meta[image_file]["labels"]["bike"] = label
+        new_label = anno_info["bike"].lower().replace(" ", "_")
+        image_labels = meta[image_file]["labels"]
+        old_label = image_labels["bike"] if "bike" in image_labels else ""
+        if not new_label == old_label:
+            print(f"Image {image_file} differs: Meta({old_label}) vs. LS({new_label})")
+        image_labels["bike"] = new_label
 
     return meta
 
