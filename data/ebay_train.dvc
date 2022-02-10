@@ -1,0 +1,5 @@
+outs:
+- md5: e713bdee72dfed1306df659d37ee342d.dir
+  size: 6480656
+  nfiles: 802
+  path: ebay_train
