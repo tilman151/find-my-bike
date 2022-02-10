@@ -26,6 +26,9 @@ def download_images(image_urls: List[Dict[str, str]], output_folder: str) -> Non
                 f.write(data)
         meta[file_name] = image_info
 
-    logger.debug("Write meta.json")
-    with open(os.path.join(output_folder, "meta.json"), mode="wt") as f:
-        json.dump(meta, f, indent=4)
+    if meta:
+        logger.debug("Write meta.json")
+        with open(os.path.join(output_folder, "meta.json"), mode="wt") as f:
+            json.dump(meta, f, indent=4)
+    else:
+        logger.debug("Skip writing empty meta.json")

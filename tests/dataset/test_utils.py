@@ -40,3 +40,10 @@ def test_download_images(image_urls, tmpdir):
         ],
         any_order=True,
     )
+
+
+def test_download_images_empty_list(tmpdir):
+    mock_open = mock.mock_open()
+    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
+        download_images([], os.path.join(tmpdir, "data"))
+    mock_open.assert_not_called()
