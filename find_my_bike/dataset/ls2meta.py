@@ -29,7 +29,7 @@ def load_json(data_path: str) -> Any:
 
 def save_json(data_path: str, data: Any) -> None:
     with open(os.path.join(data_path, "meta.json"), mode="wt") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
 
 def main(data_path: str) -> None:
