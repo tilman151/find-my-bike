@@ -17,7 +17,7 @@ class EbayDataModule(LightningDataModule):
         dataset_path: str,
         aspects: List[str],
         batch_size: int,
-        train_transforms: Optional[Callable] = None,
+        training_transforms: Optional[Callable] = None,
         num_workers: int = 4,
     ) -> None:
         super().__init__()
@@ -25,13 +25,13 @@ class EbayDataModule(LightningDataModule):
         self.dataset_path = dataset_path
         self.aspects = aspects
         self.batch_size = batch_size
-        self.train_transforms = train_transforms
+        self.training_transforms = training_transforms
         self.num_workers = num_workers
 
         self.save_hyperparameters()
 
         self.train_data = EbayDataset(
-            f"{dataset_path}_train", aspects, train_transforms
+            f"{dataset_path}_train", aspects, training_transforms
         )
         self.val_data = EbayDataset(f"{dataset_path}_val", aspects)
 
