@@ -1,5 +1,5 @@
+import json
 import os
-from unittest import mock
 
 import pytest
 import responses
@@ -27,23 +27,50 @@ def image_urls():
     return image_urls
 
 
+@pytest.fixture
+def fake_meta(tmpdir):
+    meta = {
+        "00000.jpg": {
+            "image_url": "https://foo",
+            "url": "https://foo",
+            "labels": {"bike": "children"},
+        },
+        "00001.jpg": {
+            "image_url": "https://bar",
+            "url": "https://bar",
+            "labels": {"bike": "no_bike"},
+        },
+    }
+    with open(os.path.join(tmpdir, "meta.json"), mode="wt") as f:
+        json.dump(meta, f)
+
+    return meta
+
+
 @responses.activate
 def test_download_images(image_urls, tmpdir):
-    mock_open = mock.mock_open()
-    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        download_images(image_urls, os.path.join(tmpdir, "data"))
-    mock_open.assert_has_calls(
-        [
-            mock.call(os.path.join(tmpdir, "data", "00000.jpg"), mode="wb"),
-            mock.call(os.path.join(tmpdir, "data", "00001.jpg"), mode="wb"),
-            mock.call(os.path.join(tmpdir, "data", "meta.json"), mode="wt"),
-        ],
-        any_order=True,
-    )
+    download_images(image_urls, tmpdir)
+    assert ["00000.jpg", "00001.jpg", "meta.json"] == sorted(os.listdir(tmpdir))
+    with open(os.path.join(tmpdir, "meta.json"), mode="rt") as f:
+        meta = json.load(f)
+    assert 2 == len(meta)
+    assert "00000.jpg" in meta
+    assert "00001.jpg" in meta
+    assert "labels" in meta["00000.jpg"]
+    assert isinstance(meta["00000.jpg"]["labels"], dict)
 
 
 def test_download_images_empty_list(tmpdir):
-    mock_open = mock.mock_open()
-    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        download_images([], os.path.join(tmpdir, "data"))
-    mock_open.assert_not_called()
+    download_images([], tmpdir)
+    assert not os.listdir(tmpdir)
+
+
+@responses.activate
+def test_download_images_existing_meta(image_urls, fake_meta, tmpdir):
+    download_images(image_urls, tmpdir)
+    assert ["00002.jpg", "00003.jpg", "meta.json"] == sorted(os.listdir(tmpdir))
+    with open(os.path.join(tmpdir, "meta.json"), mode="rt") as f:
+        meta = json.load(f)
+    assert len(fake_meta) + 2 == len(meta)
+    assert "00002.jpg" in meta
+    assert "00003.jpg" in meta
