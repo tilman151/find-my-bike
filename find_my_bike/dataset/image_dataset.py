@@ -78,6 +78,12 @@ class EbayDataset(Dataset):
     def classes_per_aspect(self):
         return {aspect: len(classes) for aspect, classes in self._classes.items()}
 
+    @property
+    def class_names(self):
+        return {
+            aspect: list(classes.keys()) for aspect, classes in self._classes.items()
+        }
+
     def _load_meta_file(self) -> List[Tuple[str, Dict[str, Any]]]:
         meta_path = os.path.join(self.dataset_path, "meta.json")
         with open(meta_path, mode="rt") as f:
