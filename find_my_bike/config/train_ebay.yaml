@@ -28,5 +28,12 @@ trainer:
     save_dir: ./
     name: null
     version: ''
+  callbacks:
+    - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+      monitor: val/bike_acc
+      mode: max
+    - _target_: pytorch_lightning.callbacks.early_stopping.EarlyStopping
+      monitor: val/bike_acc
+      mode: max
   plugins:
     _target_: find_my_bike.lightning.utils.TorchJitCheckpointIO
