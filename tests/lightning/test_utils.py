@@ -2,10 +2,8 @@ from unittest import mock
 
 import pytest
 import torch.jit
-from pytorch_lightning import LightningModule, Trainer
-from torch import nn
 
-from find_my_bike.lightning.utils import TorchJitCheckpointIO
+from find_my_bike.lightning.utils import TorchJitCheckpointIO, plot_conf_mat
 
 
 def test_save_checkpoint():
@@ -35,3 +33,10 @@ def test_remove_checkpoint():
             jit_io.remove_checkpoint("foo/bar.ckpt")
     mock_torch_io().remove_checkpoint.assert_called_with("foo/bar.ckpt")
     mock_rem.assert_called_with("foo/jit_module.pth")
+
+
+@pytest.skip("for visual inspection only")
+def test_plot_conf_mat():
+    conf_mat = torch.tensor([[10, 5, 1], [7, 10, 2], [2, 0, 10]])
+    fig = plot_conf_mat(conf_mat, ["a", "b", "c"])
+    fig.show()

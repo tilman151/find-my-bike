@@ -1,7 +1,8 @@
 import logging
 import os
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Optional, Callable, List
 
+import matplotlib.pyplot as plt
 import torch
 from pytorch_lightning.plugins import CheckpointIO, TorchCheckpointIO
 
@@ -65,3 +66,42 @@ class TorchJitCheckpointIO(CheckpointIO):
         os.remove(file_path)
 
         TorchCheckpointIO().remove_checkpoint(path)
+
+
+def plot_conf_mat(
+    conf_mat: torch.Tensor, classes: Optional[List[str]] = None
+) -> plt.Figure:
+    conf_mat = conf_mat.detach().cpu().numpy()
+    num_classes = conf_mat.shape[0]
+    mean_value = conf_mat.mean()
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    fig.tight_layout()
+    ax.set_aspect(1)
+    ax.imshow(conf_mat, cmap=plt.cm.cividis, interpolation="nearest")
+
+    for x in range(num_classes):
+        for y in range(num_classes):
+            value = conf_mat[x, y]
+            ax.annotate(
+                str(value),
+                xy=(y, x),
+                horizontalalignment="center",
+                verticalalignment="center",
+                fontsize="large",
+                color=("white" if value < mean_value else "black"),
+            )
+
+    if classes is None:
+        tick_labels = range(num_classes)
+    else:
+        tick_labels = classes
+    ax.set_xticks(range(num_classes))
+    ax.set_yticks(range(num_classes))
+    ax.set_xticklabels(tick_labels)
+    ax.set_yticklabels(tick_labels, rotation=90)
+
+    ax.set_xlabel("Prediction")
+    ax.set_ylabel("Ground Truth")
+
+    return fig

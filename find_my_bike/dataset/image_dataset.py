@@ -3,11 +3,11 @@ import os
 from typing import Tuple, Callable, Dict, List, Any, Optional
 
 import torch
+from PIL import Image
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
-from torchvision.datasets.folder import pil_loader
 from torchvision import transforms
-from PIL import Image
+from torchvision.datasets.folder import pil_loader
 
 
 class EbayDataModule(LightningDataModule):
@@ -39,6 +39,10 @@ class EbayDataModule(LightningDataModule):
     def classes_per_aspect(self) -> Dict[str, int]:
         return self.train_data.classes_per_aspect
 
+    @property
+    def class_names(self) -> Dict[str, List[str]]:
+        return self.train_data.class_names
+
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_data,
@@ -55,6 +59,9 @@ class EbayDataModule(LightningDataModule):
             pin_memory=True,
             num_workers=self.num_workers,
         )
+
+    def test_dataloader(self) -> DataLoader:
+        return self.val_dataloader()
 
 
 class EbayDataset(Dataset):
