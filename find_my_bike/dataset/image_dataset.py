@@ -69,17 +69,23 @@ class EbayDataset(Dataset):
         self,
         dataset_path: str,
         aspects: List[str],
-        transform: Optional[Callable] = None,
+        transform: Optional[List[Callable]] = None,
     ) -> None:
         self.dataset_path = dataset_path
         self.aspects = aspects
-        self.transform = transform or self._get_default_transform()
+        self.transform = self._get_transform(transform)
 
         self.meta = self._load_meta_file()
         self._classes = self._get_classes()
 
-    def _get_default_transform(self):
-        return transforms.Compose([UnifyingPad(200, 200), transforms.ToTensor()])
+    def _get_transform(self, transform: Optional[List[Callable]]) -> Callable:
+        default_transform = [UnifyingPad(200, 200), transforms.ToTensor()]
+        if transform is None:
+            transform = default_transform
+        else:
+            transform.extend(default_transform)
+
+        return transforms.Compose(transform)
 
     @property
     def classes_per_aspect(self):
@@ -146,3 +152,6 @@ class UnifyingPad:
         padded.paste(img, paste_pos)
 
         return padded
+
+    def __repr__(self) -> str:
+        return f"UnifyingPad({self.size[0]}, {self.size[1]})"

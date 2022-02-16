@@ -2,8 +2,9 @@ from unittest import mock
 
 import torch
 from PIL import Image
+from torchvision import transforms
 
-from find_my_bike.dataset.image_dataset import EbayDataset, EbayDataModule
+from find_my_bike.dataset.image_dataset import EbayDataset, EbayDataModule, UnifyingPad
 
 DUMMY_META_JSON = """
     {
@@ -56,8 +57,34 @@ def test_get_item(mock_pil_loader):
         dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
     img, labels = dataset[0]
     mock_pil_loader.assert_called_once_with("foo/bar/00000.jpg")
-    assert torch.dist(torch.zeros(1, 10, 10), img) == 0
+    assert torch.dist(torch.zeros(1, 200, 200), img) == 0  # Padded to 200x200
     assert torch.all(torch.tensor([2, 0]) == labels)
+
+
+def test_default_transform():
+    mock_open = mock.mock_open(read_data=DUMMY_META_JSON)
+    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
+        dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
+    _assert_last_transforms_default(dataset.transform)
+    assert 2 == len(dataset.transform.transforms)
+
+
+def test_custom_transform():
+    mock_open = mock.mock_open(read_data=DUMMY_META_JSON)
+    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
+        dataset = EbayDataset(
+            "foo/bar", ["label_1", "label_0"], transform=[transforms.CenterCrop(100)]
+        )
+    _assert_last_transforms_default(dataset.transform)
+    assert isinstance(dataset.transform.transforms[0], transforms.CenterCrop)
+
+
+def _assert_last_transforms_default(transform):
+    assert isinstance(transform, transforms.Compose)
+    transform_list = transform.transforms
+    assert isinstance(transform_list[-2], UnifyingPad)
+    assert (200, 200) == transform_list[-2].size
+    assert isinstance(transform_list[-1], transforms.ToTensor)
 
 
 @mock.patch("find_my_bike.dataset.image_dataset.EbayDataset")
@@ -73,7 +100,7 @@ def test_datamodule_creation(mock_dataset):
         "dataset_path": "foo/bar",
         "aspects": ["a", "b", "c"],
         "batch_size": 64,
-        "train_transforms": None,
+        "training_transforms": None,
         "num_workers": 4,
     }
 
