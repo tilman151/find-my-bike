@@ -77,10 +77,12 @@ class BikeClassifier(pl.LightningModule):
         self.encoder_lr_factor = encoder_lr_factor
         self.optim_type = optim
         self.ce_loss = nn.CrossEntropyLoss(ignore_index=-1)
-        self.conf_mat = {
-            aspect: torchmetrics.ConfusionMatrix(len(classes))
-            for aspect, classes in self.head.class_names.items()
-        }
+        self.conf_mat = nn.ModuleDict(
+            {
+                aspect: torchmetrics.ConfusionMatrix(len(classes))
+                for aspect, classes in self.head.class_names.items()
+            }
+        )
 
         self.save_hyperparameters(
             {
