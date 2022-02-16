@@ -28,7 +28,8 @@ class EbayDataModule(LightningDataModule):
         self.training_transforms = training_transforms
         self.num_workers = num_workers
 
-        self.save_hyperparameters()
+        # TODO: Think of way to log transforms
+        self.save_hyperparameters(ignore="training_transforms")
 
         self.train_data = EbayDataset(
             f"{dataset_path}_train", aspects, training_transforms
