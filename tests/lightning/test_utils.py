@@ -15,7 +15,7 @@ def test_save_checkpoint():
             jit_io.save_checkpoint(checkpoint, "foo/bar.ckpt")
 
     mock_torch_io().save_checkpoint.assert_called_with({}, "foo/bar.ckpt", None)
-    mock_jit_save.assert_called_with(mock_jit_module, "foo/jit_module.pth")
+    mock_jit_save.assert_called_with(mock_jit_module, "foo/jit-bar.pth")
 
 
 def test_load_checkpoint():
@@ -32,10 +32,10 @@ def test_remove_checkpoint():
         with mock.patch("find_my_bike.lightning.utils.os.remove") as mock_rem:
             jit_io.remove_checkpoint("foo/bar.ckpt")
     mock_torch_io().remove_checkpoint.assert_called_with("foo/bar.ckpt")
-    mock_rem.assert_called_with("foo/jit_module.pth")
+    mock_rem.assert_called_with("foo/jit-bar.pth")
 
 
-@pytest.skip("for visual inspection only")
+@pytest.mark.skip("for visual inspection only")
 def test_plot_conf_mat():
     conf_mat = torch.tensor([[10, 5, 1], [7, 10, 2], [2, 0, 10]])
     fig = plot_conf_mat(conf_mat, ["a", "b", "c"])

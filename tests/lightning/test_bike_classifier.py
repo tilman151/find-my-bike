@@ -14,7 +14,7 @@ from find_my_bike.lightning.bike_classifier import (
 
 @pytest.fixture
 def aspects():
-    return {"a": 2, "b": 4}
+    return {"a": ["a", "b"], "b": ["a", "b", "c", "d"]}
 
 
 @pytest.fixture
@@ -37,17 +37,17 @@ def classifier(encoder, head):
 def test_multi_aspect_head_init(aspects, head):
     assert list(aspects.keys()) == head.aspects
     assert len(aspects) == len(head.heads)
-    for h, num_classes in zip(head.heads, aspects.values()):
+    for h, classes in zip(head.heads, aspects.values()):
         assert h.in_features == 8
-        assert h.out_features == num_classes
+        assert h.out_features == len(classes)
 
 
 def test_multi_aspect_head_forward(aspects, head):
     inputs = torch.randn(4, 8)
     outputs = head(inputs)
     assert len(outputs) == len(aspects)
-    for out, num_classes in zip(outputs, aspects.values()):
-        assert out.shape[1] == num_classes
+    for out, classes in zip(outputs, aspects.values()):
+        assert out.shape[1] == len(classes)
 
 
 def test_bike_classifier_forward(aspects, classifier):
