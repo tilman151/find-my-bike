@@ -29,7 +29,7 @@ DUMMY_META_JSON = """
             "url": "url_2",
             "labels": {
                 "label_0": "2",
-                "label_1": "0"
+                "label_1": null
             }
         }
     }
@@ -44,7 +44,7 @@ def test_meta_file_loading():
     assert "label_0" in dataset._classes
     assert "label_1" in dataset._classes
     assert dataset._classes["label_0"] == {"0": 0, "1": 1, "2": 2}
-    assert dataset._classes["label_1"] == {"0": 0, "1": 1, "2": 2}
+    assert dataset._classes["label_1"] == {"1": 0, "2": 1}
 
 
 @mock.patch(
@@ -58,7 +58,11 @@ def test_get_item(mock_pil_loader):
     img, labels = dataset[0]
     mock_pil_loader.assert_called_once_with("foo/bar/00000.jpg")
     assert torch.dist(torch.zeros(1, 200, 200), img) == 0  # Padded to 200x200
-    assert torch.all(torch.tensor([2, 0]) == labels)
+    assert torch.all(torch.tensor([1, 0]) == labels)  # Order is label_1 then label_0
+
+    img, labels = dataset[2]
+    assert torch.dist(torch.zeros(1, 200, 200), img) == 0  # Padded to 200x200
+    assert torch.all(torch.tensor([-1, 2]) == labels)  # Unannotated aspect is -1
 
 
 def test_default_transform():
@@ -100,7 +104,6 @@ def test_datamodule_creation(mock_dataset):
         "dataset_path": "foo/bar",
         "aspects": ["a", "b", "c"],
         "batch_size": 64,
-        "training_transforms": None,
         "num_workers": 4,
     }
 

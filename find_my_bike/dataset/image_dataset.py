@@ -11,7 +11,6 @@ from torchvision.datasets.folder import pil_loader
 
 
 class EbayDataModule(LightningDataModule):
-    # TODO: Add ignore index -1 for missing annotation
     def __init__(
         self,
         dataset_path: str,
@@ -115,7 +114,13 @@ class EbayDataset(Dataset):
 
     def _get_classes(self) -> Dict[str, Dict[str, int]]:
         aspects = {
-            aspect: sorted({entry["labels"][aspect] for _, entry in self.meta})
+            aspect: sorted(
+                {
+                    entry["labels"][aspect]
+                    for _, entry in self.meta
+                    if entry["labels"][aspect] is not None
+                }
+            )
             for aspect in self.aspects
         }
         classes = {
@@ -131,13 +136,17 @@ class EbayDataset(Dataset):
         img = pil_loader(image_path)
         img = self.transform(img)
 
-        labels = [
-            self._classes[aspect][image_info["labels"][aspect]]
-            for aspect in self.aspects
-        ]
+        labels = [self._to_class_idx(aspect, image_info) for aspect in self.aspects]
         labels = torch.tensor(labels, dtype=torch.long)
 
         return img, labels
+
+    def _to_class_idx(self, aspect, image_info):
+        class_name = image_info["labels"][aspect]
+        if class_name is None:
+            return -1
+        else:
+            return self._classes[aspect][class_name]
 
     def __len__(self) -> int:
         return len(self.meta)
