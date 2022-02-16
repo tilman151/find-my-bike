@@ -58,6 +58,18 @@ def test_download_images(image_urls, tmpdir):
     assert "00001.jpg" in meta
     assert "labels" in meta["00000.jpg"]
     assert isinstance(meta["00000.jpg"]["labels"], dict)
+    assert not meta["00000.jpg"]["labels"]
+
+
+@responses.activate
+def test_download_images_with_aspects(image_urls, tmpdir):
+    download_images(image_urls, tmpdir, aspects=["a", "b"])
+    with open(os.path.join(tmpdir, "meta.json"), mode="rt") as f:
+        meta = json.load(f)
+    assert "00000.jpg" in meta
+    assert "labels" in meta["00000.jpg"]
+    assert isinstance(meta["00000.jpg"]["labels"], dict)
+    assert {"a": None, "b": None} == meta["00000.jpg"]["labels"]
 
 
 def test_download_images_empty_list(tmpdir):

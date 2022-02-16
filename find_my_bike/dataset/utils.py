@@ -1,18 +1,23 @@
 import json
 import logging
 import os.path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
 import requests
 from tqdm import tqdm
-
 
 logger = logging.getLogger(__name__)
 
 
-def download_images(image_urls: List[Dict[str, str]], output_folder: str) -> None:
+def download_images(
+    image_urls: List[Dict[str, str]],
+    output_folder: str,
+    aspects: Optional[List[str]] = None,
+) -> None:
     logger.debug(f"Create output_folder '{output_folder}'")
     os.makedirs(output_folder, exist_ok=True)
     meta = _get_meta(output_folder)
+    default_labels = {} if aspects is None else {aspect: None for aspect in aspects}
 
     logger.debug(f"Download {len(image_urls)} files")
     for i, image_info in enumerate(tqdm(image_urls), start=len(meta)):
@@ -24,7 +29,7 @@ def download_images(image_urls: List[Dict[str, str]], output_folder: str) -> Non
         output_path = os.path.join(output_folder, file_name)
         _write_image(response, output_path)
 
-        image_info["labels"] = {}
+        image_info["labels"] = default_labels
         meta[file_name] = image_info
 
     _write_meta(meta, output_folder)
