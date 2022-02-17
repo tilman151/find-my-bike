@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import os.path
 from typing import List, Dict, Any, Optional
 
@@ -42,12 +43,11 @@ def _write_image(response: requests.Response, output_path: str) -> None:
             f.write(data)
 
 
-def _get_meta(folder: str) -> Dict[str, Any]:
-    meta_path = os.path.join(folder, "meta.json")
-    if os.path.exists(meta_path):
-        with open(meta_path, mode="rt") as f:
-            meta = json.load(f)
-    else:
+def _get_meta(data_path: str) -> Dict[str, Dict[str, Any]]:
+    try:
+        meta = load_meta(data_path)
+    except FileNotFoundError:
+        logger.debug(f"Create new meta because meta.json not found in {data_path}")
         meta = {}
 
     return meta
@@ -55,8 +55,34 @@ def _get_meta(folder: str) -> Dict[str, Any]:
 
 def _write_meta(meta: Dict[str, Any], output_folder: str) -> None:
     if meta:
-        logger.debug("Write meta.json")
-        with open(os.path.join(output_folder, "meta.json"), mode="wt") as f:
-            json.dump(meta, f, indent=4)
+        save_meta(output_folder, meta)
     else:
         logger.debug("Skip writing empty meta.json")
+
+
+def load_annotations(data_path: str) -> List[Dict[str, Any]]:
+    with open(os.path.join(data_path, "annotations.json"), mode="rt") as f:
+        anno = json.load(f)
+    logger.debug(f"Loaded meta.json from {data_path}")
+
+    return anno
+
+
+def save_annotations(data_path: str, annotations: List[Dict[str, Any]]) -> None:
+    with open(os.path.join(data_path, "annotations.json"), mode="wt") as f:
+        json.dump(annotations, f)
+    logger.debug(f"Saved annotations.json to {data_path}")
+
+
+def load_meta(data_path: str) -> Dict[str, Dict[str, Any]]:
+    with open(os.path.join(data_path, "meta.json"), mode="rt") as f:
+        meta = json.load(f)
+    logger.debug(f"Loaded meta.json from {data_path}")
+
+    return meta
+
+
+def save_meta(data_path: str, meta: Any) -> None:
+    with open(os.path.join(data_path, "meta.json"), mode="wt") as f:
+        json.dump(meta, f, indent=4)
+    logger.debug(f"Saved meta.json to {data_path}")

@@ -1,6 +1,7 @@
-import json
 import os
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
+
+from find_my_bike.dataset import utils
 
 _LS_INFO_KEYS = {
     "image",
@@ -42,24 +43,11 @@ def _set_aspect_label(
         image_labels[aspect] = new_label
 
 
-def load_json(data_path: str) -> Tuple[Any, Any]:
-    with open(os.path.join(data_path, "annotations.json"), mode="rt") as f:
-        anno = json.load(f)
-    with open(os.path.join(data_path, "meta.json"), mode="rt") as f:
-        meta = json.load(f)
-
-    return meta, anno
-
-
-def save_json(data_path: str, data: Any) -> None:
-    with open(os.path.join(data_path, "meta.json"), mode="wt") as f:
-        json.dump(data, f, indent=4)
-
-
 def main(data_path: str) -> None:
-    meta, anno = load_json(data_path)
+    meta = utils.load_meta(data_path)
+    anno = utils.load_annotations(data_path)
     meta = labelstudio2meta(meta, anno)
-    save_json(data_path, meta)
+    utils.save_meta(data_path, meta)
 
 
 if __name__ == "__main__":

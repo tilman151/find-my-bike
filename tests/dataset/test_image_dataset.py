@@ -6,40 +6,29 @@ from torchvision import transforms
 
 from find_my_bike.dataset.image_dataset import EbayDataset, EbayDataModule, UnifyingPad
 
-DUMMY_META_JSON = """
-    {
-        "00000.jpg": {
-            "image_url": "img_url_0",
-            "url": "url_0",
-            "labels": {
-                "label_0": "0",
-                "label_1": "2"
-            }
-        },
-        "00001.jpg": {
-            "image_url": "img_url_1",
-            "url": "url_1",
-            "labels": {
-                "label_0": "1",
-                "label_1": "1"
-            }
-        },
-        "00002.jpg": {
-            "image_url": "img_url_2",
-            "url": "url_2",
-            "labels": {
-                "label_0": "2",
-                "label_1": null
-            }
-        }
-    }
-"""
+DUMMY_META_JSON = {
+    "00000.jpg": {
+        "image_url": "img_url_0",
+        "url": "url_0",
+        "labels": {"label_0": "0", "label_1": "2"},
+    },
+    "00001.jpg": {
+        "image_url": "img_url_1",
+        "url": "url_1",
+        "labels": {"label_0": "1", "label_1": "1"},
+    },
+    "00002.jpg": {
+        "image_url": "img_url_2",
+        "url": "url_2",
+        "labels": {"label_0": "2", "label_1": None},
+    },
+}
 
 
-def test_meta_file_loading():
-    mock_open = mock.mock_open(read_data=DUMMY_META_JSON)
-    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
+@mock.patch("find_my_bike.dataset.utils.load_meta", return_value=DUMMY_META_JSON)
+def test_meta_file_loading(mock_load_meta):
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
+    mock_load_meta.assert_called_with("foo/bar")
     assert len(dataset.meta) == 3
     assert "label_0" in dataset._classes
     assert "label_1" in dataset._classes
@@ -51,10 +40,9 @@ def test_meta_file_loading():
     "find_my_bike.dataset.image_dataset.pil_loader",
     return_value=Image.new("RGB", (10, 10)),
 )
-def test_get_item(mock_pil_loader):
-    mock_open = mock.mock_open(read_data=DUMMY_META_JSON)
-    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
+@mock.patch("find_my_bike.dataset.utils.load_meta", return_value=DUMMY_META_JSON)
+def test_get_item(mock_load_meta, mock_pil_loader):
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
     img, labels = dataset[0]
     mock_pil_loader.assert_called_once_with("foo/bar/00000.jpg")
     assert torch.dist(torch.zeros(1, 200, 200), img) == 0  # Padded to 200x200
@@ -65,20 +53,18 @@ def test_get_item(mock_pil_loader):
     assert torch.all(torch.tensor([-1, 2]) == labels)  # Unannotated aspect is -1
 
 
-def test_default_transform():
-    mock_open = mock.mock_open(read_data=DUMMY_META_JSON)
-    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
+@mock.patch("find_my_bike.dataset.utils.load_meta", return_value=DUMMY_META_JSON)
+def test_default_transform(mock_load_meta):
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
     _assert_last_transforms_default(dataset.transform)
     assert 2 == len(dataset.transform.transforms)
 
 
-def test_custom_transform():
-    mock_open = mock.mock_open(read_data=DUMMY_META_JSON)
-    with mock.patch("find_my_bike.dataset.image_dataset.open", new=mock_open):
-        dataset = EbayDataset(
-            "foo/bar", ["label_1", "label_0"], transform=[transforms.CenterCrop(100)]
-        )
+@mock.patch("find_my_bike.dataset.utils.load_meta", return_value=DUMMY_META_JSON)
+def test_custom_transform(mock_load_meta):
+    dataset = EbayDataset(
+        "foo/bar", ["label_1", "label_0"], transform=[transforms.CenterCrop(100)]
+    )
     _assert_last_transforms_default(dataset.transform)
     assert isinstance(dataset.transform.transforms[0], transforms.CenterCrop)
 

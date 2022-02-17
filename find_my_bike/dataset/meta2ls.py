@@ -1,11 +1,10 @@
 import os
-import json
 from typing import Dict, Any, List
 
+from find_my_bike.dataset import utils
 
-def meta2labelstudio(
-    data_dir: str, meta: Dict[str, Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+
+def meta2labelstudio(meta: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
     annotations = []
     for file_name, file_info in meta.items():
         anno = {
@@ -41,22 +40,10 @@ def meta2labelstudio(
     return annotations
 
 
-def load_json(data_path: str) -> Any:
-    with open(os.path.join(data_path, "meta.json"), mode="rt") as f:
-        data = json.load(f)
-
-    return data
-
-
-def save_json(data_path: str, data: Any) -> None:
-    with open(os.path.join(data_path, "annotations.json"), mode="wt") as f:
-        json.dump(data, f)
-
-
 def main(data_path: str) -> None:
-    meta = load_json(data_path)
-    converted = meta2labelstudio(data_path, meta)
-    save_json(data_path, converted)
+    meta = utils.load_meta(data_path)
+    converted = meta2labelstudio(meta)
+    utils.save_annotations(data_path, converted)
 
 
 if __name__ == "__main__":

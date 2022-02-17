@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Tuple, Callable, Dict, List, Any, Optional
 
@@ -8,6 +7,8 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.datasets.folder import pil_loader
+
+from find_my_bike.dataset import utils
 
 
 class EbayDataModule(LightningDataModule):
@@ -34,10 +35,6 @@ class EbayDataModule(LightningDataModule):
             f"{dataset_path}_train", aspects, training_transforms
         )
         self.val_data = EbayDataset(f"{dataset_path}_val", aspects)
-
-    @property
-    def classes_per_aspect(self) -> Dict[str, int]:
-        return self.train_data.classes_per_aspect
 
     @property
     def class_names(self) -> Dict[str, List[str]]:
@@ -88,27 +85,21 @@ class EbayDataset(Dataset):
         return transforms.Compose(transform)
 
     @property
-    def classes_per_aspect(self):
-        return {aspect: len(classes) for aspect, classes in self._classes.items()}
-
-    @property
     def class_names(self):
         return {
             aspect: list(classes.keys()) for aspect, classes in self._classes.items()
         }
 
-    def _load_meta_file(self) -> List[Tuple[str, Dict[str, Any]]]:
-        meta_path = os.path.join(self.dataset_path, "meta.json")
-        with open(meta_path, mode="rt") as f:
-            meta = json.load(f)
-        meta = list(meta.items())
+    def _load_meta_file(self) -> List[Tuple[str, dict[str, Any]]]:
+        meta = utils.load_meta(self.dataset_path)
         self._verify_meta(meta)
+        meta_list = [(k, v) for k, v in meta.items()]
 
-        return meta
+        return meta_list
 
-    def _verify_meta(self, meta: List[Tuple[str, Dict[str, Any]]]) -> None:
+    def _verify_meta(self, meta: Dict[str, Dict[str, Any]]) -> None:
         aspect_set = set(self.aspects)
-        for file_name, entry in meta:
+        for file_name, entry in meta.items():
             if diff := aspect_set.difference(entry["labels"].keys()):
                 raise RuntimeError(f"Image '{file_name}' is missing the aspects {diff}")
 
