@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 import torch
 from torch import nn
+from torch.nn.functional import cross_entropy
 
 from find_my_bike.lightning.bike_classifier import (
     MultiAspectHead,
@@ -34,6 +35,15 @@ def classifier(encoder, head):
     return BikeClassifier(encoder, head)
 
 
+@pytest.fixture
+def fake_logits():
+    fake_logits = [
+        torch.tensor([[0.0, 1.0], [1.0, 0.0]]),
+        torch.tensor([[0.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 0.0]]),
+    ]
+    return fake_logits
+
+
 def test_multi_aspect_head_init(aspects, head):
     assert list(aspects.keys()) == head.aspects
     assert len(aspects) == len(head.heads)
@@ -54,6 +64,30 @@ def test_bike_classifier_forward(aspects, classifier):
     inputs = torch.randn(4, 16)
     outputs = classifier(inputs)
     assert len(outputs) == len(aspects)
+
+
+def test_bike_classifier_loss(classifier, fake_logits, monkeypatch):
+    labels = torch.tensor([[0, 0], [1, 0]])
+    monkeypatch.setattr(classifier, "forward", lambda _: fake_logits)
+
+    loss = classifier.training_step((torch.zeros(2, 16), labels), 0)
+
+    aspect0_loss = cross_entropy(fake_logits[0], labels[:, 0])
+    aspect1_loss = cross_entropy(fake_logits[1], labels[:, 1])
+    expected_loss = aspect0_loss + aspect1_loss
+    assert loss == expected_loss
+
+
+def test_bike_classifier_loss_ignore_index(classifier, fake_logits, monkeypatch):
+    labels = torch.tensor([[0, 0], [-1, 0]])
+    monkeypatch.setattr(classifier, "forward", lambda _: fake_logits)
+
+    loss = classifier.training_step((torch.zeros(2, 16), labels), 0)
+
+    aspect0_loss_without_ignored = cross_entropy(fake_logits[0][:1], labels[:1, 0])
+    aspect1_loss = cross_entropy(fake_logits[1], labels[:, 1])
+    expected_loss = aspect0_loss_without_ignored + aspect1_loss
+    assert loss == expected_loss
 
 
 def test_accuracy():
