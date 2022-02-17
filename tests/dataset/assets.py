@@ -1,3 +1,7 @@
+import copy
+
+import pytest
+
 DUMMY_META_JSON = {
     "00000.jpg": {
         "image_url": "img_url_0",
@@ -15,3 +19,8 @@ DUMMY_META_JSON = {
         "labels": {"label_0": "2", "label_1": None},
     },
 }
+
+
+@pytest.fixture
+def dummy_meta():
+    return copy.deepcopy(DUMMY_META_JSON)

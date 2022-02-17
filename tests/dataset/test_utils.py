@@ -6,7 +6,6 @@ import responses
 from responses import matchers
 
 from find_my_bike.dataset.utils import download_images
-from tests.dataset.assets import DUMMY_META_JSON
 
 
 @pytest.fixture
@@ -29,11 +28,11 @@ def image_urls():
 
 
 @pytest.fixture
-def fake_meta(tmpdir):
+def fake_meta(tmpdir, dummy_meta):
     with open(os.path.join(tmpdir, "meta.json"), mode="wt") as f:
-        json.dump(DUMMY_META_JSON, f)
+        json.dump(dummy_meta, f)
 
-    return DUMMY_META_JSON
+    return dummy_meta
 
 
 @responses.activate
