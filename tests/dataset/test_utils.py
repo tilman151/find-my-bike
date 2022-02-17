@@ -6,6 +6,7 @@ import responses
 from responses import matchers
 
 from find_my_bike.dataset.utils import download_images
+from tests.dataset.assets import DUMMY_META_JSON
 
 
 @pytest.fixture
@@ -29,22 +30,10 @@ def image_urls():
 
 @pytest.fixture
 def fake_meta(tmpdir):
-    meta = {
-        "00000.jpg": {
-            "image_url": "https://foo",
-            "url": "https://foo",
-            "labels": {"bike": "children"},
-        },
-        "00001.jpg": {
-            "image_url": "https://bar",
-            "url": "https://bar",
-            "labels": {"bike": "no_bike"},
-        },
-    }
     with open(os.path.join(tmpdir, "meta.json"), mode="wt") as f:
-        json.dump(meta, f)
+        json.dump(DUMMY_META_JSON, f)
 
-    return meta
+    return DUMMY_META_JSON
 
 
 @responses.activate
@@ -80,9 +69,9 @@ def test_download_images_empty_list(tmpdir):
 @responses.activate
 def test_download_images_existing_meta(image_urls, fake_meta, tmpdir):
     download_images(image_urls, tmpdir)
-    assert ["00002.jpg", "00003.jpg", "meta.json"] == sorted(os.listdir(tmpdir))
+    assert sorted(os.listdir(tmpdir)) == ["00003.jpg", "00004.jpg", "meta.json"]
     with open(os.path.join(tmpdir, "meta.json"), mode="rt") as f:
         meta = json.load(f)
     assert len(fake_meta) + 2 == len(meta)
-    assert "00002.jpg" in meta
     assert "00003.jpg" in meta
+    assert "00004.jpg" in meta
