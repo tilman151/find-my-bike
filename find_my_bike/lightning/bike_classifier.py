@@ -139,7 +139,8 @@ class BikeClassifier(pl.LightningModule):
         img, labels = batch
         preds = self.forward(img)
         for aspect, pred, label in zip(self.head.aspects, preds, labels.T):
-            self.conf_mat[aspect].update(pred, label)
+            non_ignored = label != -1
+            self.conf_mat[aspect].update(pred[non_ignored], label[non_ignored])
 
     def on_test_end(self) -> None:
         logger = self.logger

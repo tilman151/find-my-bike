@@ -90,6 +90,13 @@ def test_bike_classifier_loss_ignore_index(classifier, fake_logits, monkeypatch)
     assert loss == expected_loss
 
 
+def test_bike_classifier_confmat_ignore_index(classifier):
+    labels = torch.tensor([[0, 0], [-1, 0]])
+    classifier.test_step((torch.zeros(2, 16), labels), 0)
+    assert classifier.conf_mat["a"].confmat.sum() == 1
+    assert classifier.conf_mat["b"].confmat.sum() == 2
+
+
 def test_accuracy():
     preds = torch.tensor([[0.0, 1.0], [1.0, 0.0], [0.6, 0.5]])
 
