@@ -125,6 +125,7 @@ def test_bike_classifier_val_step(aspects, classifier):
         classifier.validation_step(batch, batch_idx=0)
     mock_log.assert_has_calls(
         [
+            mock.call("val/loss", mock.ANY),
             mock.call("val/a_acc", mock.ANY),
             mock.call("val/b_acc", mock.ANY),
         ]

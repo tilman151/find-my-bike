@@ -119,7 +119,7 @@ class BikeClassifier(pl.LightningModule):
     ) -> torch.Tensor:
         img, labels = batch
         preds = self.forward(img)
-        loss = sum(self.ce_loss(pred, label) for pred, label in zip(preds, labels.T))
+        loss = self._summed_los(preds, labels)
         self.log("train/loss", loss)
 
         return loss
@@ -129,9 +129,14 @@ class BikeClassifier(pl.LightningModule):
     ) -> None:
         img, labels = batch
         preds = self.forward(img)
+        loss = self._summed_los(preds, labels)
+        self.log("val/loss", loss)
         for aspect, pred, label in zip(self.head.aspects, preds, labels.T):
             acc = _accuracy(pred, label, ignore_index=-1)
             self.log(f"val/{aspect}_acc", acc)
+
+    def _summed_los(self, preds, labels):
+        return sum(self.ce_loss(pred, label) for pred, label in zip(preds, labels.T))
 
     def test_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
