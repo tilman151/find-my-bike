@@ -1,7 +1,7 @@
 data:
   _target_: find_my_bike.dataset.EbayDataModule
   dataset_path: /home/tilman/Programming/find-my-bike/data/ebay
-  aspects: [bike]
+  aspects: [bike, frame]
   batch_size: 64
 
 model:
@@ -30,10 +30,11 @@ trainer:
     version: ''
   callbacks:
     - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-      monitor: val/bike_acc
-      mode: max
+      monitor: val/loss
+      mode: min
     - _target_: pytorch_lightning.callbacks.early_stopping.EarlyStopping
-      monitor: val/bike_acc
-      mode: max
+      monitor: val/loss
+      mode: min
+      patience: 10
   plugins:
     _target_: find_my_bike.lightning.utils.TorchJitCheckpointIO
