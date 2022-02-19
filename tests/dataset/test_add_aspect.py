@@ -1,5 +1,8 @@
 from find_my_bike.dataset.add_aspect import add_aspect
 
+# noinspection PyUnresolvedReferences
+from .assets import dummy_meta
+
 
 def test_add_aspect(dummy_meta):
     changed_meta = add_aspect("test", dummy_meta)

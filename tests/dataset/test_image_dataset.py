@@ -6,6 +6,8 @@ from PIL import Image
 from torchvision import transforms
 
 from find_my_bike.dataset.image_dataset import EbayDataset, EbayDataModule, UnifyingPad
+# noinspection PyUnresolvedReferences
+from .assets import dummy_meta
 
 
 @pytest.fixture
