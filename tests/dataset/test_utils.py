@@ -12,19 +12,17 @@ from .assets import dummy_meta
 
 @pytest.fixture
 def image_urls():
-    image_urls = [{"image_url": "https://foo"}, {"image_url": "https://bar"}]
-    responses.add(
-        responses.GET,
-        "https://foo",
-        body="0" * 8,
-        match=[matchers.request_kwargs_matcher({"stream": True})],
-    )
-    responses.add(
-        responses.GET,
-        "https://bar",
-        body="0" * 8,
-        match=[matchers.request_kwargs_matcher({"stream": True})],
-    )
+    image_urls = [
+        {"image_url": "https://foo", "url": "https://foo"},
+        {"image_url": "https://bar", "url": "https://bar"},
+    ]
+    for image_url in image_urls:
+        responses.add(
+            responses.GET,
+            image_url["image_url"],
+            body="0" * 8,
+            match=[matchers.request_kwargs_matcher({"stream": True})],
+        )
 
     return image_urls
 
@@ -76,3 +74,16 @@ def test_download_images_existing_meta(image_urls, fake_meta, tmpdir):
     assert len(fake_meta) + 2 == len(meta)
     assert "00003.jpg" in meta
     assert "00004.jpg" in meta
+
+
+@responses.activate
+def test_download_images_known_url_filtering(image_urls, fake_meta, tmpdir):
+    fake_meta["00003.jpg"] = image_urls[0]
+    with open(os.path.join(tmpdir, "meta.json"), mode="wt") as f:
+        json.dump(fake_meta, f)
+    download_images(image_urls, tmpdir)
+    with open(os.path.join(tmpdir, "meta.json"), mode="rt") as f:
+        meta = json.load(f)
+    assert len(fake_meta) + 1 == len(meta)
+    assert "00004.jpg" in meta
+    assert meta["00004.jpg"]["url"] == image_urls[1]["url"]

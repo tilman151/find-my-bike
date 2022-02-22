@@ -18,6 +18,7 @@ def download_images(
     logger.debug(f"Create output_folder '{output_folder}'")
     os.makedirs(output_folder, exist_ok=True)
     meta = _get_meta(output_folder)
+    image_urls = _filter_known_urls(image_urls, meta)
     default_labels = {} if aspects is None else {aspect: None for aspect in aspects}
 
     logger.debug(f"Download {len(image_urls)} files")
@@ -34,6 +35,14 @@ def download_images(
         meta[file_name] = image_info
 
     _write_meta(meta, output_folder)
+
+
+def _filter_known_urls(image_urls, meta):
+    known_urls = {image_info["url"] for image_info in meta.values()}
+    filtered_urls = [url for url in image_urls if url["url"] not in known_urls]
+    logger.info(f"Filtered out {len(image_urls) - len(filtered_urls)} known urls.")
+
+    return filtered_urls
 
 
 def _write_image(response: requests.Response, output_path: str) -> None:
