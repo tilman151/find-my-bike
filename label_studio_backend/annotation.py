@@ -18,14 +18,11 @@ class JitModel(LabelStudioMLBase):
     def __init__(self, **kwargs):
         super(JitModel, self).__init__(**kwargs)
 
-        from_name, schema = list(self.parsed_label_config.items())[0]
-        self.from_name = from_name
-        self.to_name = schema["to_name"][0]
-        self.labels = sorted(schema["labels"])
-
         global _MODEL
         if _MODEL is None:
-            _MODEL = torch.jit.load(os.path.join(SCRIPT_PATH, "model.pth"))
+            _MODEL = torch.jit.load(
+                os.path.join(SCRIPT_PATH, "model.pth"), map_location="cpu"
+            )
         self.img_base_url = os.environ["LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT"]
 
     @torch.no_grad()
@@ -39,21 +36,29 @@ class JitModel(LabelStudioMLBase):
             inputs = _TRANSFORMS(img)
             inputs = inputs.unsqueeze(0)
             outputs = _MODEL(inputs)
-            class_idx = torch.argmax(outputs[0], dim=1).squeeze().item()
-            score = outputs[0][0, class_idx].item()
-            predictions.append(
-                {
-                    "score": score,
-                    # prediction overall score, visible in the data manager columns
-                    "result": [
+            pred = {
+                "model_version": "BikeClassifier",
+                "result": [],
+            }
+            is_bike = False
+            for output, (aspect, config) in zip(
+                outputs, self.parsed_label_config.items()
+            ):
+                class_idx = torch.argmax(output, dim=1).squeeze().item()
+                label = sorted(config["labels"])[class_idx]
+                score = output[0, class_idx].item()
+                if aspect == "bike" and label == "Bike":
+                    is_bike = True
+                if aspect == "bike" or is_bike:
+                    pred["result"].append(
                         {
-                            "from_name": self.from_name,
-                            "to_name": self.to_name,
+                            "from_name": aspect,
+                            "to_name": config["to_name"][0],
                             "type": "choices",
-                            "score": score,  # per-region score, visible in the editor
-                            "value": {"choices": [self.labels[class_idx]]},
+                            "score": score,
+                            "value": {"choices": [label]},
                         }
-                    ],
-                }
-            )
+                    )
+            predictions.append(pred)
+
         return predictions
