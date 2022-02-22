@@ -6,8 +6,6 @@ import responses
 from responses import matchers
 
 from find_my_bike.dataset.utils import download_images
-# noinspection PyUnresolvedReferences
-from .assets import dummy_meta
 
 
 @pytest.fixture
