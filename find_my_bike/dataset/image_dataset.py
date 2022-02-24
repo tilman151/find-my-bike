@@ -29,6 +29,7 @@ class EbayDataModule(LightningDataModule):
         self.training_transforms = training_transforms
         self.high_res = high_res
         self.num_workers = num_workers
+        self.persistent_workers = os.name == "nt"
 
         # TODO: Think of way to log transforms
         self.save_hyperparameters(ignore="training_transforms")
@@ -49,6 +50,7 @@ class EbayDataModule(LightningDataModule):
             shuffle=True,
             pin_memory=True,
             num_workers=self.num_workers,
+            persistent_workers=self.persistent_workers,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -57,6 +59,7 @@ class EbayDataModule(LightningDataModule):
             batch_size=self.batch_size,
             pin_memory=True,
             num_workers=self.num_workers,
+            persistent_workers=self.persistent_workers,
         )
 
     def test_dataloader(self) -> DataLoader:
