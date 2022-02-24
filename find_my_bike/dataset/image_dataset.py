@@ -149,7 +149,7 @@ class UnifyingPad:
 
     def __call__(self, img: Image) -> Image:
         padded = Image.new("RGB", self.size)
-        paste_pos = self.size[0] - img.size[0], self.size[1] - img.size[1]
+        paste_pos = (self.size[0] - img.size[0]) // 2, (self.size[1] - img.size[1]) // 2
         padded.paste(img, paste_pos)
 
         return padded
