@@ -18,7 +18,7 @@ class EbayDataModule(LightningDataModule):
         aspects: List[str],
         batch_size: int,
         training_transforms: Optional[Callable] = None,
-        high_res: bool = False,
+        high_res: Optional[int] = None,
         num_workers: int = 4,
     ) -> None:
         super().__init__()
@@ -72,7 +72,7 @@ class EbayDataset(Dataset):
         dataset_path: str,
         aspects: List[str],
         transform: Optional[List[Callable]] = None,
-        high_res: bool = False,
+        high_res: Optional[int] = None,
     ) -> None:
         self.dataset_path = dataset_path
         self.aspects = aspects
@@ -83,7 +83,7 @@ class EbayDataset(Dataset):
         self._classes = self._get_classes()
 
     def _get_transform(self, transform: Optional[List[Callable]]) -> Callable:
-        max_size = 500 if self.high_res else 200
+        max_size = self.high_res or 200
         default_transform = [
             UnifyingResize(max_size),
             UnifyingPad(max_size, max_size),
@@ -105,7 +105,7 @@ class EbayDataset(Dataset):
     def _load_meta_file(self) -> List[Tuple[str, dict[str, Any]]]:
         meta = utils.load_meta(self.dataset_path)
         self._verify_meta(meta)
-        if self.high_res:
+        if self.high_res is not None:
             meta_list = [
                 (k.replace(".jpg", "_highres.jpg"), v) for k, v in meta.items()
             ]

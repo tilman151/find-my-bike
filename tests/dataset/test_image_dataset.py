@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 import numpy as np
@@ -40,7 +41,7 @@ def test_meta_file_loading(patch_load_meta):
 
 
 def test_meta_file_loading_high_res(patch_load_meta):
-    dataset = EbayDataset("foo/bar", ["label_1", "label_0"], high_res=True)
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"], high_res=500)
     assert all(key.endswith("_highres.jpg") for key, _ in dataset.meta)
 
 
@@ -60,7 +61,7 @@ def test_default_transform(patch_load_meta):
     _assert_last_transforms_default(dataset.transform, 200)
     assert 3 == len(dataset.transform.transforms)
 
-    dataset = EbayDataset("foo/bar", ["label_1", "label_0"], high_res=True)
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"], high_res=500)
     _assert_last_transforms_default(dataset.transform, 500)
     assert 3 == len(dataset.transform.transforms)
 
@@ -88,8 +89,8 @@ def test_datamodule_creation(mock_dataset):
     dm = EbayDataModule("foo/bar", ["a", "b", "c"], 64)
     mock_dataset.assert_has_calls(
         [
-            mock.call("foo/bar_train", ["a", "b", "c"], None, False),
-            mock.call("foo/bar_val", ["a", "b", "c"], high_res=False),
+            mock.call("foo/bar_train", ["a", "b", "c"], None, None),
+            mock.call("foo/bar_val", ["a", "b", "c"], high_res=None),
         ]
     )
     assert dm.hparams == {
@@ -97,7 +98,7 @@ def test_datamodule_creation(mock_dataset):
         "aspects": ["a", "b", "c"],
         "batch_size": 64,
         "num_workers": 4,
-        "high_res": False,
+        "high_res": None,
     }
 
 
@@ -118,7 +119,11 @@ def test_datamodule_loaders(mock_loader, mock_dataset):
     dm = EbayDataModule("foo/bar", ["a", "b", "c"], 64)
     val_loader = dm.val_dataloader()
     mock_loader.assert_called_with(
-        mock_dataset(), batch_size=64, pin_memory=True, num_workers=4
+        mock_dataset(),
+        batch_size=64,
+        pin_memory=True,
+        num_workers=4,
+        persistent_workers=os.name == "nt",
     )
     assert val_loader is mock_loader()
 
