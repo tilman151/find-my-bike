@@ -70,7 +70,7 @@ def _write_meta(meta: Dict[str, Any], output_folder: str) -> None:
 
 
 def download_high_res_images(meta: Dict[str, Dict[str, Any]], output_folder: str):
-    for image_file, image_info in meta.items():
+    for image_file, image_info in tqdm(meta.items()):
         high_res_url = image_info["image_url"].replace("$_2.JPG", "$_59.JPG")
         high_res_file = image_file.replace(".jpg", "_highres.jpg")
         high_res_path = os.path.join(output_folder, high_res_file)
