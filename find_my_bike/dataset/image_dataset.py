@@ -18,6 +18,7 @@ class EbayDataModule(LightningDataModule):
         aspects: List[str],
         batch_size: int,
         training_transforms: Optional[Callable] = None,
+        high_res: bool = False,
         num_workers: int = 4,
     ) -> None:
         super().__init__()
@@ -26,15 +27,16 @@ class EbayDataModule(LightningDataModule):
         self.aspects = aspects
         self.batch_size = batch_size
         self.training_transforms = training_transforms
+        self.high_res = high_res
         self.num_workers = num_workers
 
         # TODO: Think of way to log transforms
         self.save_hyperparameters(ignore="training_transforms")
 
         self.train_data = EbayDataset(
-            f"{dataset_path}_train", aspects, training_transforms
+            f"{dataset_path}_train", aspects, training_transforms, high_res
         )
-        self.val_data = EbayDataset(f"{dataset_path}_val", aspects)
+        self.val_data = EbayDataset(f"{dataset_path}_val", aspects, high_res=high_res)
 
     @property
     def class_names(self) -> Dict[str, List[str]]:
@@ -67,16 +69,23 @@ class EbayDataset(Dataset):
         dataset_path: str,
         aspects: List[str],
         transform: Optional[List[Callable]] = None,
+        high_res: bool = False,
     ) -> None:
         self.dataset_path = dataset_path
         self.aspects = aspects
+        self.high_res = high_res
         self.transform = self._get_transform(transform)
 
         self.meta = self._load_meta_file()
         self._classes = self._get_classes()
 
     def _get_transform(self, transform: Optional[List[Callable]]) -> Callable:
-        default_transform = [UnifyingPad(200, 200), transforms.ToTensor()]
+        max_size = 500 if self.high_res else 200
+        default_transform = [
+            UnifyingResize(max_size),
+            UnifyingPad(max_size, max_size),
+            transforms.ToTensor(),
+        ]
         if transform is None:
             transform = default_transform
         else:
@@ -93,7 +102,12 @@ class EbayDataset(Dataset):
     def _load_meta_file(self) -> List[Tuple[str, dict[str, Any]]]:
         meta = utils.load_meta(self.dataset_path)
         self._verify_meta(meta)
-        meta_list = [(k, v) for k, v in meta.items()]
+        if self.high_res:
+            meta_list = [
+                (k.replace(".jpg", "_highres.jpg"), v) for k, v in meta.items()
+            ]
+        else:
+            meta_list = [(k, v) for k, v in meta.items()]
 
         return meta_list
 
@@ -156,3 +170,20 @@ class UnifyingPad:
 
     def __repr__(self) -> str:
         return f"UnifyingPad({self.size[0]}, {self.size[1]})"
+
+
+class UnifyingResize:
+    def __init__(self, max_size: int):
+        self.max_size = max_size
+
+    def __call__(self, img: Image.Image) -> Image.Image:
+        h, w = img.size
+        if h < w:
+            resized = img.resize((int(self.max_size * h / w), self.max_size))
+        else:
+            resized = img.resize((self.max_size, int(self.max_size * w / h)))
+
+        return resized
+
+    def __repr__(self) -> str:
+        return f"UnifyingPad({self.max_size})"

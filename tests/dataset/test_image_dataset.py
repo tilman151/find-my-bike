@@ -1,11 +1,17 @@
 from unittest import mock
 
+import numpy as np
 import pytest
 import torch
 from PIL import Image
 from torchvision import transforms
 
-from find_my_bike.dataset.image_dataset import EbayDataset, EbayDataModule, UnifyingPad
+from find_my_bike.dataset.image_dataset import (
+    EbayDataset,
+    EbayDataModule,
+    UnifyingPad,
+    UnifyingResize,
+)
 
 
 @pytest.fixture
@@ -33,6 +39,11 @@ def test_meta_file_loading(patch_load_meta):
     assert dataset._classes["label_1"] == {"1": 0, "2": 1}
 
 
+def test_meta_file_loading_high_res(patch_load_meta):
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"], high_res=True)
+    assert all(key.endswith("_highres.jpg") for key, _ in dataset.meta)
+
+
 def test_get_item(patch_load_meta, patch_pil_loader):
     dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
     img, labels = dataset[0]
@@ -46,23 +57,29 @@ def test_get_item(patch_load_meta, patch_pil_loader):
 
 def test_default_transform(patch_load_meta):
     dataset = EbayDataset("foo/bar", ["label_1", "label_0"])
-    _assert_last_transforms_default(dataset.transform)
-    assert 2 == len(dataset.transform.transforms)
+    _assert_last_transforms_default(dataset.transform, 200)
+    assert 3 == len(dataset.transform.transforms)
+
+    dataset = EbayDataset("foo/bar", ["label_1", "label_0"], high_res=True)
+    _assert_last_transforms_default(dataset.transform, 500)
+    assert 3 == len(dataset.transform.transforms)
 
 
 def test_custom_transform(patch_load_meta):
     dataset = EbayDataset(
         "foo/bar", ["label_1", "label_0"], transform=[transforms.CenterCrop(100)]
     )
-    _assert_last_transforms_default(dataset.transform)
+    _assert_last_transforms_default(dataset.transform, 200)
     assert isinstance(dataset.transform.transforms[0], transforms.CenterCrop)
 
 
-def _assert_last_transforms_default(transform):
+def _assert_last_transforms_default(transform, max_size):
     assert isinstance(transform, transforms.Compose)
     transform_list = transform.transforms
+    assert isinstance(transform_list[-3], UnifyingResize)
+    assert max_size == transform_list[-3].max_size
     assert isinstance(transform_list[-2], UnifyingPad)
-    assert (200, 200) == transform_list[-2].size
+    assert (max_size, max_size) == transform_list[-2].size
     assert isinstance(transform_list[-1], transforms.ToTensor)
 
 
@@ -71,8 +88,8 @@ def test_datamodule_creation(mock_dataset):
     dm = EbayDataModule("foo/bar", ["a", "b", "c"], 64)
     mock_dataset.assert_has_calls(
         [
-            mock.call("foo/bar_train", ["a", "b", "c"], None),
-            mock.call("foo/bar_val", ["a", "b", "c"]),
+            mock.call("foo/bar_train", ["a", "b", "c"], None, False),
+            mock.call("foo/bar_val", ["a", "b", "c"], high_res=False),
         ]
     )
     assert dm.hparams == {
@@ -80,6 +97,7 @@ def test_datamodule_creation(mock_dataset):
         "aspects": ["a", "b", "c"],
         "batch_size": 64,
         "num_workers": 4,
+        "high_res": False,
     }
 
 
@@ -103,3 +121,23 @@ def test_datamodule_loaders(mock_loader, mock_dataset):
         mock_dataset(), batch_size=64, pin_memory=True, num_workers=4
     )
     assert val_loader is mock_loader()
+
+
+def test_unifying_pad():
+    transform = UnifyingPad(100, 100)
+    img = Image.new("RGB", (10, 10), color="white")
+    padded = transform(img)
+    assert padded.size == (100, 100)  # right size
+    assert np.array(padded)[50, 50].tolist() == [255] * 3  # center position
+
+
+def test_unifying_resize():
+    transform = UnifyingResize(100)
+
+    img = Image.new("RGB", (50, 10))
+    resized = transform(img)
+    assert resized.size == (100, 20)
+
+    img = Image.new("RGB", (10, 50))
+    resized = transform(img)
+    assert resized.size == (20, 100)
