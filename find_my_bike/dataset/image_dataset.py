@@ -29,7 +29,7 @@ class EbayDataModule(LightningDataModule):
         self.training_transforms = training_transforms
         self.high_res = high_res
         self.num_workers = num_workers
-        self.persistent_workers = os.name == "nt"
+        self.persistent_workers = (os.name == "nt") and (num_workers > 0)
 
         # TODO: Think of way to log transforms
         self.save_hyperparameters(ignore="training_transforms")
