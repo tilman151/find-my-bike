@@ -99,7 +99,7 @@ def plot_conf_mat(
     ax.set_xticks(range(num_classes))
     ax.set_yticks(range(num_classes))
     ax.set_xticklabels(tick_labels)
-    ax.set_yticklabels(tick_labels, rotation=90)
+    ax.set_yticklabels(tick_labels, rotation=90, ha="center", va="center")
 
     ax.set_xlabel("Prediction")
     ax.set_ylabel("Ground Truth")
