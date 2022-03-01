@@ -148,7 +148,7 @@ class BikeClassifier(pl.LightningModule):
         preds = self.forward(imgs)
         for aspect, pred, label in zip(self.head.aspects, preds, labels.T):
             self._update_conf_mat(aspect, pred, label)
-            self._record_error_images(aspect, pred, label, imgs)
+            self._record_error_images(aspect, pred, label, imgs, batch_idx)
 
     def _update_conf_mat(
         self, aspect: str, pred: torch.Tensor, label: torch.Tensor
@@ -157,7 +157,12 @@ class BikeClassifier(pl.LightningModule):
         self.conf_mat[aspect].update(pred[non_ignored], label[non_ignored])
 
     def _record_error_images(
-        self, aspect: str, preds: torch.Tensor, labels: torch.Tensor, imgs: torch.Tensor
+        self,
+        aspect: str,
+        preds: torch.Tensor,
+        labels: torch.Tensor,
+        imgs: torch.Tensor,
+        batch_idx: int,
     ) -> None:
         preds = torch.argmax(preds, dim=1)
         wrong = (labels != -1) & (preds != labels)
@@ -167,7 +172,7 @@ class BikeClassifier(pl.LightningModule):
             label_name = self.head.class_names[aspect][label]
             error_image = plot_error_image(img, pred_name, label_name)
             self.logger.experiment.add_figure(
-                f"error_images/{aspect}", error_image, step=i
+                f"error_images/{aspect}_{batch_idx:03}_{i:03}", error_image
             )
 
     def on_test_end(self) -> None:
