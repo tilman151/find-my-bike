@@ -137,3 +137,11 @@ def test_bike_classifier_on_checkpoint(classifier):
     classifier.on_save_checkpoint(checkpoint)
     assert "jit_module" in checkpoint
     assert isinstance(checkpoint["jit_module"], torch.jit.ScriptModule)
+
+
+def test_bike_classifier_record_error_images(classifier, monkeypatch):
+    imgs = torch.rand(2, 3, 10, 10)
+    preds = torch.rand(2, 2)
+    labels = torch.tensor([0, 1])
+    monkeypatch.setattr(classifier, "trainer", mock.MagicMock(name="trainer"))
+    classifier._record_error_images("a", preds, labels, imgs)

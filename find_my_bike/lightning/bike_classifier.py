@@ -3,6 +3,7 @@ from typing import Type, Tuple, Dict, List, Any
 import pytorch_lightning as pl
 import torch
 import torchmetrics
+from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torchmetrics.functional import accuracy
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -14,7 +15,9 @@ class MultiAspectHead(nn.Module):
     def __init__(self, aspects: Dict[str, List[str]], in_features: int):
         super().__init__()
 
-        self._aspects = dict(aspects)
+        if isinstance(aspects, DictConfig):
+            aspects = OmegaConf.to_container(aspects)
+        self._aspects = aspects
         self.in_features = in_features
         self.heads = self._build_heads()
 
@@ -157,7 +160,7 @@ class BikeClassifier(pl.LightningModule):
         self, aspect: str, preds: torch.Tensor, labels: torch.Tensor, imgs: torch.Tensor
     ) -> None:
         preds = torch.argmax(preds, dim=1)
-        wrong = (labels != -1) and (preds != labels)
+        wrong = (labels != -1) & (preds != labels)
         iter_wrong = zip(imgs[wrong], preds[wrong], labels[wrong])
         for i, (img, pred, label) in enumerate(iter_wrong):
             pred_name = self.head.class_names[aspect][pred]
