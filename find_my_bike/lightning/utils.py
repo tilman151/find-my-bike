@@ -3,6 +3,7 @@ import os
 from typing import Dict, Any, Optional, Callable, List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from pytorch_lightning.plugins import CheckpointIO, TorchCheckpointIO
 
@@ -103,5 +104,22 @@ def plot_conf_mat(
 
     ax.set_xlabel("Prediction")
     ax.set_ylabel("Ground Truth")
+
+    return fig
+
+
+def plot_error_image(img: torch.Tensor, pred: str, label: str) -> plt.Figure:
+    img = img.detach().cpu().numpy()
+    img = np.transpose(img, (1, 2, 0))
+
+    fig, ax = plt.subplots(1, 1, figsize=(2.5, 2.5))
+    fig.tight_layout()
+    ax.set_aspect(1)
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
+
+    ax.imshow(img)
+    ax.set_ylabel(label)
+    ax.set_xlabel(pred)
 
     return fig

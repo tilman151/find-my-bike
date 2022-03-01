@@ -7,7 +7,7 @@ from torch import nn
 from torchmetrics.functional import accuracy
 from torchvision.models.feature_extraction import create_feature_extractor
 
-from find_my_bike.lightning.utils import plot_conf_mat
+from find_my_bike.lightning.utils import plot_conf_mat, plot_error_image
 
 
 class MultiAspectHead(nn.Module):
@@ -141,11 +141,31 @@ class BikeClassifier(pl.LightningModule):
     def test_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> None:
-        img, labels = batch
-        preds = self.forward(img)
+        imgs, labels = batch
+        preds = self.forward(imgs)
         for aspect, pred, label in zip(self.head.aspects, preds, labels.T):
-            non_ignored = label != -1
-            self.conf_mat[aspect].update(pred[non_ignored], label[non_ignored])
+            self._update_conf_mat(aspect, pred, label)
+            self._record_error_images(aspect, pred, label, imgs)
+
+    def _update_conf_mat(
+        self, aspect: str, pred: torch.Tensor, label: torch.Tensor
+    ) -> None:
+        non_ignored = label != -1
+        self.conf_mat[aspect].update(pred[non_ignored], label[non_ignored])
+
+    def _record_error_images(
+        self, aspect: str, preds: torch.Tensor, labels: torch.Tensor, imgs: torch.Tensor
+    ) -> None:
+        preds = torch.argmax(preds, dim=1)
+        wrong = (labels != -1) and (preds != labels)
+        iter_wrong = zip(imgs[wrong], preds[wrong], labels[wrong])
+        for i, (img, pred, label) in enumerate(iter_wrong):
+            pred_name = self.head.class_names[aspect][pred]
+            label_name = self.head.class_names[aspect][label]
+            error_image = plot_error_image(img, pred_name, label_name)
+            self.logger.experiment.add_figure(
+                f"error_images/{aspect}", error_image, step=i
+            )
 
     def on_test_end(self) -> None:
         logger = self.logger
@@ -153,4 +173,4 @@ class BikeClassifier(pl.LightningModule):
             conf_mat_img = plot_conf_mat(
                 conf_mat.compute(), self.head.class_names[aspect]
             )
-            logger.experiment.add_figure(f"val/conf_mat_{aspect}", conf_mat_img)
+            logger.experiment.add_figure(f"conf_mat/{aspect}", conf_mat_img)

@@ -3,7 +3,11 @@ from unittest import mock
 import pytest
 import torch.jit
 
-from find_my_bike.lightning.utils import TorchJitCheckpointIO, plot_conf_mat
+from find_my_bike.lightning.utils import (
+    TorchJitCheckpointIO,
+    plot_conf_mat,
+    plot_error_image,
+)
 
 
 def test_save_checkpoint():
@@ -39,4 +43,11 @@ def test_remove_checkpoint():
 def test_plot_conf_mat():
     conf_mat = torch.tensor([[10, 5, 1], [7, 10, 2], [2, 0, 10]])
     fig = plot_conf_mat(conf_mat, ["a", "b", "c"])
+    fig.show()
+
+
+@pytest.mark.skip("for visual inspection only")
+def test_plot_error_image():
+    img = torch.rand(3, 10, 10)
+    fig = plot_error_image(img, "Prediction", "Ground Truth")
     fig.show()
