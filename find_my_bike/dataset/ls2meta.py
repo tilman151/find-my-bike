@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 
 from find_my_bike.dataset import utils
 
@@ -18,7 +18,7 @@ def labelstudio2meta(
     meta: Dict[str, Dict[str, Any]], annotations: List[Dict[str, Any]]
 ) -> Dict[str, Dict[str, Any]]:
     for anno_info in annotations:
-        image_file = os.path.basename(anno_info["image"])
+        image_file = os.path.basename(anno_info["image"]).replace("_highres", "")
         for aspect in set(anno_info.keys()).difference(_LS_INFO_KEYS):
             new_label = _norm_label(anno_info[aspect])
             _set_aspect_label(aspect, new_label, image_file, meta)
@@ -26,7 +26,16 @@ def labelstudio2meta(
     return meta
 
 
-def _norm_label(label: str) -> str:
+def _norm_label(label: Union[str, Dict[str, List[str]]]) -> Union[str, List[str]]:
+    if isinstance(label, str):
+        return _norm_string_label(label)
+    elif isinstance(label, dict):
+        return [_norm_string_label(x) for x in label["choices"]]
+    else:
+        raise ValueError(f"Unsupported label type {type(label)}")
+
+
+def _norm_string_label(label: str) -> str:
     return label.lower().replace(" ", "_")
 
 
