@@ -1,7 +1,5 @@
 from unittest import mock
 
-import pytest
-
 from find_my_bike.scrape.ebay import EbayImageScraper
 
 
@@ -23,8 +21,8 @@ def test_context_manager(mock_webdriver):
 
 
 def test_retrieving_items():
-    with EbayImageScraper() as scraper:
-        items = scraper.get_items("Fahrrad", "Berlin", 30)
+    with EbayImageScraper(headless=False) as scraper:
+        items = scraper.get_items("Fahrrad", "Berlin", "Fahrräder & Zubehör", 30)
     assert len(items) == 30
     assert "url" in items[0]
     assert "image_url" in items[0]
