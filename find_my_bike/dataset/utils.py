@@ -102,5 +102,5 @@ def load_meta(data_path: str) -> Dict[str, Dict[str, Any]]:
 
 def save_meta(data_path: str, meta: Any) -> None:
     with open(os.path.join(data_path, "meta.json"), mode="wt") as f:
-        json.dump(meta, f, indent=4)
+        json.dump(meta, f, indent=4, default=str)
     logger.debug(f"Saved meta.json to {data_path}")
