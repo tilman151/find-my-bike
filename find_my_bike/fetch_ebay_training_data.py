@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 DATA_ROOT = os.path.join(os.path.dirname(__file__), "..", "data")
 
 
-@hydra.main(config_path="config", config_name="ebay_data")
+@hydra.main(config_path="config", config_name="ebay_training_data")
 def fetch_ebay_val_data(config: DictConfig) -> None:
     num_images = config.num_train_images + config.num_val_images
     with EbayImageScraper() as scraper:

@@ -6,3 +6,4 @@ num_val_images: 200
 aspects:
   - bike
   - frame
+  - color

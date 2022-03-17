@@ -39,9 +39,12 @@ def download_images(
 
 
 def _filter_known_urls(image_urls, meta):
-    known_urls = {image_info["url"] for image_info in meta.values()}
-    filtered_urls = [url for url in image_urls if url["url"] not in known_urls]
-    logger.info(f"Filtered out {len(image_urls) - len(filtered_urls)} known urls.")
+    if meta:
+        known_urls = {image_info["url"] for image_info in meta.values()}
+        filtered_urls = [url for url in image_urls if url["url"] not in known_urls]
+        logger.info(f"Filtered out {len(image_urls) - len(filtered_urls)} known urls.")
+    else:
+        filtered_urls = image_urls
 
     return filtered_urls
 

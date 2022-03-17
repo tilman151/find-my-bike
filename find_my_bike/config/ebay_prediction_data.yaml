@@ -1,0 +1,8 @@
+download_path: ???
+query: Fahrrad
+location: Berlin
+category: Fahrräder & Zubehör
+aspects:
+  - bike
+  - frame
+  - color

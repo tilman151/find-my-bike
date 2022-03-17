@@ -128,7 +128,7 @@ class EbayImageScraper:
     ) -> List[Dict[str, Any]]:
         logger.info(f"Retrieve items after {until}")
         items = []
-        while items[-1]["date"] > until:
+        while not items or items[-1]["date"] > until:
             items.extend(self._get_items_from_page(query, location))
             try:
                 self._navigate_next_result_page()
@@ -138,7 +138,7 @@ class EbayImageScraper:
         if items[-1]["date"] > until:
             warnings.warn(f"Could only fetch {len(items)} items after {until}")
         else:
-            items = list(filter(lambda item: item["data"] > until, items))
+            items = list(filter(lambda item: item["date"] > until, items))
 
         return items
 
@@ -146,7 +146,10 @@ class EbayImageScraper:
         self, query: str, location: Optional[str] = None
     ) -> List[Dict[str, str]]:
         ads = self.driver.find_elements(By.CLASS_NAME, "aditem")
-        logger.debug(f"Get {len(ads)} items from page")
+        page_num = self._wait_until_populated(
+            self.driver.find_element(By.CLASS_NAME, "pagination-current")
+        )
+        logger.info(f"Get {len(ads)} items from page {page_num}")
         items = [
             item
             for ad in ads
