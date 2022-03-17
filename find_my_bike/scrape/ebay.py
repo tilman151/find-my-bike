@@ -1,8 +1,8 @@
 import logging
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from time import sleep
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -43,13 +43,19 @@ class EbayImageScraper:
         query: Optional[str] = None,
         location: Optional[str] = None,
         category: Optional[str] = None,
-        num: int = 100,
-    ) -> List[Dict[str, str]]:
+        num: Optional[int] = None,
+        until: Optional[date] = None,
+    ) -> List[Dict[str, Any]]:
+        self._validate_args(num, until)
         self._open_website()
         self._search(query, location, category)
-        items = self._get_items(num, query, location)
-        if len(items) < num:
-            warnings.warn(f"Could only fetch {len(items)} items")
+
+        if num is not None:
+            items = self._get_num_items(num, query, location)
+        elif until is not None:
+            items = self._get_until_items(until, query, location)
+        else:
+            raise RuntimeError("Misconfiguration of num or until.")
 
         return items
 
@@ -100,9 +106,9 @@ class EbayImageScraper:
 
         return categories
 
-    def _get_items(
+    def _get_num_items(
         self, num: int, query: str, location: Optional[str] = None
-    ) -> List[Dict[str, str]]:
+    ) -> List[Dict[str, Any]]:
         logger.info(f"Retrieve {num} items")
         items = []
         while len(items) < num:
@@ -112,7 +118,29 @@ class EbayImageScraper:
             except NoSuchElementException:
                 break
 
+        if len(items) < num:
+            warnings.warn(f"Could only fetch {len(items)} items")
+
         return items[:num]
+
+    def _get_until_items(
+        self, until: date, query: str, location: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        logger.info(f"Retrieve items after {until}")
+        items = []
+        while items[-1]["date"] > until:
+            items.extend(self._get_items_from_page(query, location))
+            try:
+                self._navigate_next_result_page()
+            except NoSuchElementException:
+                break
+
+        if items[-1]["date"] > until:
+            warnings.warn(f"Could only fetch {len(items)} items after {until}")
+        else:
+            items = list(filter(lambda item: item["data"] > until, items))
+
+        return items
 
     def _get_items_from_page(
         self, query: str, location: Optional[str] = None
@@ -176,13 +204,20 @@ class EbayImageScraper:
         next_page_btn.click()
 
     @staticmethod
-    def _parse_date(date: str) -> datetime:
-        if "Heute" in date:
+    def _validate_args(num, until):
+        if num is None and until is None:
+            raise ValueError("Supply either num or until.")
+        elif num is not None and until is not None:
+            raise ValueError("Using num and until is mutually exclusive.")
+
+    @staticmethod
+    def _parse_date(date_repr: str) -> datetime:
+        if "Heute" in date_repr:
             parsed = datetime.today().date()
-        elif "Gestern" in date:
+        elif "Gestern" in date_repr:
             parsed = datetime.today().date() - timedelta(days=1)
         else:
-            parsed = datetime.strptime(date, "%d.%m.%Y")
+            parsed = datetime.strptime(date_repr, "%d.%m.%Y")
 
         return parsed
 

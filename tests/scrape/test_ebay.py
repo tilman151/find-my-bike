@@ -1,3 +1,4 @@
+from datetime import date
 from unittest import mock
 
 from find_my_bike.scrape.ebay import EbayImageScraper
@@ -34,3 +35,17 @@ def test_high_res_image_urls():
     with EbayImageScraper(high_res=True) as scraper:
         items = scraper.get_items("Fahrrad", "Berlin", "Fahrräder & Zubehör", 1)
     assert items[0]["image_url"].endswith("$_59.JPG")  # URL for highres image
+
+
+@mock.patch.object(EbayImageScraper, "_get_until_items")
+@mock.patch.object(EbayImageScraper, "_get_num_items")
+def test_number_of_items_configuration(mock_get_num, mock_get_until):
+    with EbayImageScraper() as scraper:
+        scraper.get_items("Fahrrad", "Berlin", "Fahrräder & Zubehör", num=30)
+    mock_get_num.assert_called_with(30, "Fahrrad", "Berlin")
+
+    with EbayImageScraper() as scraper:
+        scraper.get_items(
+            "Fahrrad", "Berlin", "Fahrräder & Zubehör", until=date.today()
+        )
+    mock_get_until.assert_called_with(date.today(), "Fahrrad", "Berlin")
