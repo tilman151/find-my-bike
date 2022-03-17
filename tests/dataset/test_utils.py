@@ -5,7 +5,7 @@ import pytest
 import responses
 from responses import matchers
 
-from find_my_bike.dataset.utils import download_images
+from find_my_bike.dataset.utils import download_images, save_meta, load_meta
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def image_urls():
 @pytest.fixture
 def fake_meta(tmpdir, dummy_meta):
     with open(os.path.join(tmpdir, "meta.json"), mode="wt") as f:
-        json.dump(dummy_meta, f)
+        json.dump(dummy_meta, f, default=str)
 
     return dummy_meta
 
@@ -85,3 +85,16 @@ def test_download_images_known_url_filtering(image_urls, fake_meta, tmpdir):
     assert len(fake_meta) + 1 == len(meta)
     assert "00004.jpg" in meta
     assert meta["00004.jpg"]["url"] == image_urls[1]["url"]
+
+
+def test_save_and_load_dates(tmpdir, dummy_meta):
+    save_meta(tmpdir, dummy_meta)
+    loaded_meta = load_meta(tmpdir)
+
+    assert dummy_meta == loaded_meta
+
+
+def test_save_meta_type_safe(tmpdir, dummy_meta):
+    dummy_meta["00000.jpg"]["foo"] = lambda x: x  # not serializable
+    with pytest.raises(TypeError):
+        save_meta(tmpdir, dummy_meta)

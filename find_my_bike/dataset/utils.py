@@ -2,7 +2,8 @@ import json
 import logging
 import os
 import os.path
-from typing import List, Dict, Any, Optional
+from datetime import date
+from typing import List, Dict, Any, Optional, Tuple
 
 import requests
 from tqdm import tqdm
@@ -93,14 +94,26 @@ def save_annotations(data_path: str, annotations: List[Dict[str, Any]]) -> None:
 
 
 def load_meta(data_path: str) -> Dict[str, Dict[str, Any]]:
+    def object_pairs_hook(results: List[Tuple[Any, Any]]) -> Dict[str, Any]:
+        return {
+            key: date.fromisoformat(value) if key == "date" else value
+            for key, value in results
+        }
+
     with open(os.path.join(data_path, "meta.json"), mode="rt") as f:
-        meta = json.load(f)
+        meta = json.load(f, object_pairs_hook=object_pairs_hook)
     logger.debug(f"Loaded meta.json from {data_path}")
 
     return meta
 
 
 def save_meta(data_path: str, meta: Any) -> None:
+    def default(o: Any) -> str:
+        if isinstance(o, date):
+            return str(o)
+        else:
+            raise TypeError(f"Object of type {type(o)} not serializable.")
+
     with open(os.path.join(data_path, "meta.json"), mode="wt") as f:
-        json.dump(meta, f, indent=4, default=str)
+        json.dump(meta, f, indent=4, default=default)
     logger.debug(f"Saved meta.json to {data_path}")
