@@ -21,10 +21,16 @@ def test_context_manager(mock_webdriver):
 
 
 def test_retrieving_items():
-    with EbayImageScraper(headless=False) as scraper:
+    with EbayImageScraper() as scraper:
         items = scraper.get_items("Fahrrad", "Berlin", "Fahrräder & Zubehör", 30)
     assert len(items) == 30
     assert "url" in items[0]
     assert "image_url" in items[0]
     assert "query" in items[0]
     assert "location" in items[0]
+
+
+def test_high_res_image_urls():
+    with EbayImageScraper(high_res=True) as scraper:
+        items = scraper.get_items("Fahrrad", "Berlin", "Fahrräder & Zubehör", 1)
+    assert items[0]["image_url"].endswith("$_59.JPG")  # URL for highres image

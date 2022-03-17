@@ -21,7 +21,8 @@ class EbayImageScraper:
     headless: bool
     driver: webdriver.Chrome
 
-    def __init__(self, headless: bool = True) -> None:
+    def __init__(self, high_res: bool = False, headless: bool = True) -> None:
+        self.high_res = high_res
         self.headless = headless
 
         options = webdriver.ChromeOptions()
@@ -138,6 +139,8 @@ class EbayImageScraper:
             raise_error=False,
         )
         if image_url is not None and date is not None:
+            if self.high_res:
+                image_url = image_url.replace("$_2.JPG", "$_59.JPG")
             item = {
                 "image_url": image_url,
                 "url": url,
