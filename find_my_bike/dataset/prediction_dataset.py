@@ -1,0 +1,49 @@
+from io import BytesIO
+from io import BytesIO
+from typing import Optional, Callable
+
+import requests
+import torch
+from PIL import Image
+from torch.utils.data import Dataset
+from torchvision.transforms import transforms
+
+from find_my_bike.dataset import utils
+from find_my_bike.dataset.transforms import UnifyingPad, UnifyingResize
+
+
+class PredictionDataset(Dataset):
+    def __init__(
+        self,
+        dataset_path: str,
+        high_res: Optional[int] = None,
+    ):
+        self.dataset_path = dataset_path
+        self.high_res = high_res
+
+        self.image_urls = utils.load_image_urls(dataset_path)
+        self.transform = self._get_transform()
+
+    def _get_transform(self) -> Callable:
+        max_size = self.high_res or 200
+        transform = [
+            UnifyingResize(max_size),
+            UnifyingPad(max_size, max_size),
+            transforms.ToTensor(),
+        ]
+
+        return transforms.Compose(transform)
+
+    def __getitem__(self, index: int) -> torch.Tensor:
+        image_url = self.image_urls[index]["image_url"]
+        image = self._get_image(image_url)
+        image = self.transform(image)
+
+        return image
+
+    @staticmethod
+    def _get_image(image_url: str) -> Image.Image:
+        response = requests.get(image_url, stream=True)
+        image = Image.open(BytesIO(response.content), formats=["jpeg"])
+
+        return image

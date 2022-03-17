@@ -1,4 +1,3 @@
-import json
 import logging
 import os.path
 from datetime import date, timedelta
@@ -6,6 +5,7 @@ from datetime import date, timedelta
 import hydra
 from omegaconf import DictConfig
 
+from find_my_bike.dataset.utils import save_image_urls
 from find_my_bike.scrape import EbayImageScraper
 
 logger = logging.getLogger(__name__)
@@ -24,8 +24,7 @@ def fetch_ebay_prediction_data(config: DictConfig) -> None:
         item["prediction"] = {aspect: None for aspect in config.aspects}
 
     os.makedirs(config.download_path, exist_ok=True)
-    with open(os.path.join(config.download_path, "image_urls.json"), mode="wt") as f:
-        json.dump(image_urls, f)
+    save_image_urls(config.download_path, image_urls)
 
 
 if __name__ == "__main__":

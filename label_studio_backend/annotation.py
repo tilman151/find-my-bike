@@ -5,7 +5,7 @@ from label_studio_ml.model import LabelStudioMLBase
 from torchvision import transforms
 from torchvision.datasets.folder import pil_loader
 
-from find_my_bike.dataset.image_dataset import UnifyingPad
+from find_my_bike.dataset.transforms import UnifyingPad
 
 SCRIPT_PATH = os.path.dirname(__file__)
 _MODEL = None

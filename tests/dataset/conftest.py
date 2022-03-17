@@ -25,6 +25,33 @@ DUMMY_META_JSON = {
 }
 
 
+DUMMY_IMAGE_URLS = [
+    {
+        "image_url": "http://foo.bar/0",
+        "url": "url_0",
+        "date": date.fromisoformat("2022-03-17"),
+        "prediction": {"bike": None, "frame": None, "color": None},
+    },
+    {
+        "image_url": "http://foo.bar/1",
+        "url": "url_1",
+        "date": date.fromisoformat("2022-03-17"),
+        "prediction": {"bike": None, "frame": None, "color": None},
+    },
+    {
+        "image_url": "http://foo.bar/2",
+        "url": "url_2",
+        "date": date.fromisoformat("2022-03-17"),
+        "prediction": {"bike": None, "frame": None, "color": None},
+    },
+]
+
+
 @pytest.fixture
 def dummy_meta():
     return copy.deepcopy(DUMMY_META_JSON)
+
+
+@pytest.fixture
+def dummy_image_urls():
+    return copy.deepcopy(DUMMY_IMAGE_URLS)

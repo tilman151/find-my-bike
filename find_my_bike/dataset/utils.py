@@ -97,26 +97,42 @@ def save_annotations(data_path: str, annotations: List[Dict[str, Any]]) -> None:
 
 
 def load_meta(data_path: str) -> Dict[str, Dict[str, Any]]:
-    def object_pairs_hook(results: List[Tuple[Any, Any]]) -> Dict[str, Any]:
-        return {
-            key: date.fromisoformat(value) if key == "date" else value
-            for key, value in results
-        }
-
     with open(os.path.join(data_path, "meta.json"), mode="rt") as f:
-        meta = json.load(f, object_pairs_hook=object_pairs_hook)
+        meta = json.load(f, object_pairs_hook=_json_object_pairs_hook)
+
     logger.debug(f"Loaded meta.json from {data_path}")
 
     return meta
 
 
 def save_meta(data_path: str, meta: Any) -> None:
-    def default(o: Any) -> str:
-        if isinstance(o, date):
-            return str(o)
-        else:
-            raise TypeError(f"Object of type {type(o)} not serializable.")
-
     with open(os.path.join(data_path, "meta.json"), mode="wt") as f:
-        json.dump(meta, f, indent=4, default=default)
+        json.dump(meta, f, indent=4, default=_json_default)
+
     logger.debug(f"Saved meta.json to {data_path}")
+
+
+def load_image_urls(load_path: str) -> List[Dict[str, Any]]:
+    with open(os.path.join(load_path, "image_urls.json"), mode="rt") as f:
+        image_urls = json.load(f, object_pairs_hook=_json_object_pairs_hook)
+
+    return image_urls
+
+
+def save_image_urls(save_path: str, image_urls: List[Dict[str, Any]]) -> None:
+    with open(os.path.join(save_path, "image_urls.json"), mode="wt") as f:
+        json.dump(image_urls, f, indent=4, default=_json_default)
+
+
+def _json_object_pairs_hook(results: List[Tuple[Any, Any]]) -> Dict[str, Any]:
+    return {
+        key: date.fromisoformat(value) if key == "date" else value
+        for key, value in results
+    }
+
+
+def _json_default(o: Any) -> str:
+    if isinstance(o, date):
+        return str(o)
+    else:
+        raise TypeError(f"Object of type {type(o)} not serializable.")
