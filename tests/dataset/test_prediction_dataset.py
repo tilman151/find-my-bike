@@ -6,7 +6,6 @@ import torch
 from PIL import Image
 from responses import matchers
 
-from find_my_bike.dataset import utils
 from find_my_bike.dataset.prediction_dataset import PredictionDataset
 
 
@@ -33,8 +32,10 @@ def _dummy_image_bytes():
 
 
 @responses.activate
-def test_iteration(tmpdir, image_urls):
-    utils.save_image_urls(tmpdir, image_urls)
+def test_iteration(tmpdir, monkeypatch, image_urls):
+    monkeypatch.setattr(
+        "find_my_bike.dataset.utils.load_image_urls", lambda _: image_urls
+    )
     dataset = PredictionDataset(tmpdir, high_res=500)
     white = torch.ones(3)
     for img in dataset:
