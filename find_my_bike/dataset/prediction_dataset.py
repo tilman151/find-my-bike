@@ -1,5 +1,4 @@
 from io import BytesIO
-from io import BytesIO
 from typing import Optional, Callable
 
 import requests
@@ -40,6 +39,9 @@ class PredictionDataset(Dataset):
         image = self.transform(image)
 
         return image
+
+    def __len__(self) -> int:
+        return len(self.image_urls)
 
     @staticmethod
     def _get_image(image_url: str) -> Image.Image:

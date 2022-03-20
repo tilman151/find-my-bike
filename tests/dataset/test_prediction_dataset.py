@@ -42,3 +42,11 @@ def test_iteration(tmpdir, monkeypatch, image_urls):
         assert img.shape == (3, 500, 500)
         # center is white so image was requested correctly
         assert torch.dist(img[:, 255, 255], white) == 0.0
+
+
+def test_length(tmpdir, monkeypatch, image_urls):
+    monkeypatch.setattr(
+        "find_my_bike.dataset.utils.load_image_urls", lambda _: image_urls
+    )
+    dataset = PredictionDataset(tmpdir, high_res=500)
+    assert len(dataset) == len(image_urls)
