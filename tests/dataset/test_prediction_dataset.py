@@ -38,10 +38,11 @@ def test_iteration(tmpdir, monkeypatch, image_urls):
     )
     dataset = PredictionDataset(tmpdir, high_res=500)
     white = torch.ones(3)
-    for img in dataset:
+    for i, (img, image_info) in enumerate(dataset):
         assert img.shape == (3, 500, 500)
         # center is white so image was requested correctly
         assert torch.dist(img[:, 255, 255], white) == 0.0
+        assert image_info == image_urls[i]
 
 
 def test_length(tmpdir, monkeypatch, image_urls):

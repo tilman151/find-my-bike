@@ -1,5 +1,6 @@
+import copy
 from io import BytesIO
-from typing import Optional, Callable
+from typing import Optional, Callable, Any, Dict, Tuple
 
 import requests
 import torch
@@ -33,12 +34,12 @@ class PredictionDataset(Dataset):
 
         return transforms.Compose(transform)
 
-    def __getitem__(self, index: int) -> torch.Tensor:
-        image_url = self.image_urls[index]["image_url"]
-        image = self._get_image(image_url)
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        image_info = self.image_urls[index]
+        image = self._get_image(image_info["image_url"])
         image = self.transform(image)
 
-        return image
+        return image, copy.deepcopy(image_info)
 
     def __len__(self) -> int:
         return len(self.image_urls)
