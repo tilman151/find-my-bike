@@ -145,3 +145,15 @@ def test_bike_classifier_record_error_images(classifier, monkeypatch):
     labels = torch.tensor([0, 1])
     monkeypatch.setattr(classifier, "trainer", mock.MagicMock(name="trainer"))
     classifier._record_error_images("a", preds, labels, imgs)
+
+
+def test_bike_classifier_predict(classifier, fake_logits, monkeypatch):
+    monkeypatch.setattr(classifier, "forward", lambda _: fake_logits)
+    preds = classifier.predict(torch.zeros(2, 3, 200, 200))
+    assert preds == [{"a": "b", "b": "d"}, {"a": "a", "b": "a"}]
+
+
+def test_bike_classifier_jitted_predict(classifier):
+    jitted = classifier.to_torchscript()
+    inputs = torch.randn(2, 16)
+    assert jitted.predict(inputs) == classifier.predict(inputs)

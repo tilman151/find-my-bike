@@ -29,12 +29,10 @@ class MultiAspectHead(nn.Module):
         return heads
 
     @property
-    @torch.jit.unused
     def aspects(self) -> List[str]:
         return list(self._aspects.keys())
 
     @property
-    @torch.jit.unused
     def class_names(self) -> Dict[str, List[str]]:
         return self._aspects
 
@@ -114,6 +112,17 @@ class BikeClassifier(pl.LightningModule):
     def forward(self, img: torch.Tensor) -> List[torch.Tensor]:
         features = self.encoder(img)
         preds = self.head(features)
+
+        return preds
+
+    @torch.jit.export
+    def predict(self, imgs: torch.Tensor) -> List[Dict[str, str]]:
+        logits = self(imgs)
+        preds = [{aspect: "" for aspect in self.head.aspects} for _ in imgs]
+        for logit, (aspect, class_names) in zip(logits, self.head.class_names.items()):
+            class_idx = torch.argmax(logit, dim=1)
+            for class_id, pred in zip(class_idx, preds):
+                pred[aspect] = class_names[class_id.item()]
 
         return preds
 
