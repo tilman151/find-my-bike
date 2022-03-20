@@ -1,0 +1,15 @@
+data:
+  _target_: torch.utils.data.DataLoader
+  dataset:
+    _target_: find_my_bike.dataset.PredictionDataset
+    dataset_path: ???
+    high_res: 800
+  collate_fn:
+    _target_: find_my_bike.dataset.PredictionDataset.get_collate_fn
+  batch_size: 4
+  num_workers: 4
+
+model:
+  _target_: torch.jit.load
+  f: ???
+  map_location: cpu

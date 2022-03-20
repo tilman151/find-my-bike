@@ -47,6 +47,13 @@ class PredictionDataset(Dataset):
     @staticmethod
     def _get_image(image_url: str) -> Image.Image:
         response = requests.get(image_url, stream=True)
-        image = Image.open(BytesIO(response.content), formats=["jpeg"])
+        image = Image.open(BytesIO(response.content), formats=["jpeg", "png"])
 
         return image
+
+    @staticmethod
+    def get_collate_fn() -> Callable:
+        return lambda data: (
+            torch.stack([img for img, _ in data]),
+            [info for _, info in data],
+        )
