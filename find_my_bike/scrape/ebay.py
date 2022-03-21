@@ -162,7 +162,7 @@ class EbayImageScraper:
         image = ad.find_element(By.CLASS_NAME, "imagebox")
         image_url = image.get_attribute("data-imgsrc")
         title_tag = ad.find_element(
-            By.XPATH, "//h2[contains(@class, 'text-module-begin')]/a"
+            By.XPATH, ".//h2[contains(@class, 'text-module-begin')]/a"
         )
         url = title_tag.get_attribute("href")
         date = self._wait_until_populated(
