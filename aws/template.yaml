@@ -3,13 +3,8 @@ Transform: AWS::Serverless-2016-10-31
 
 Globals:
   Function:
-    Timeout: 50
-    MemorySize: 5000
-  Api:
-    BinaryMediaTypes:
-      - image/png
-      - image/jpg
-      - image/jpeg
+    Timeout: 100
+    MemorySize: 3008
 
 Resources:
   InferenceFunction:
@@ -22,7 +17,7 @@ Resources:
         Inference:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /classify_digit
+            Path: /predict
             Method: post
     Metadata:
       Dockerfile: Dockerfile
@@ -35,7 +30,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   InferenceApi:
     Description: "API Gateway endpoint URL for Prod stage for Inference function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/classify_digit/"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/predict/"
   InferenceFunction:
     Description: "Inference Lambda Function ARN"
     Value: !GetAtt InferenceFunction.Arn

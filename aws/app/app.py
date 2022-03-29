@@ -1,72 +1,73 @@
-import base64
 import json
 from io import BytesIO
 
-import numpy as np
+import requests
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torchvision
 from PIL import Image
 
-image_transforms = torchvision.transforms.Compose(
+
+class UnifyingPad:
+    def __init__(self, x: int, y: int):
+        self.size = x, y
+
+    def __call__(self, img: Image) -> Image:
+        padded = Image.new("RGB", self.size)
+        paste_pos = (self.size[0] - img.size[0]) // 2, (self.size[1] - img.size[1]) // 2
+        padded.paste(img, paste_pos)
+
+        return padded
+
+    def __repr__(self) -> str:
+        return f"UnifyingPad({self.size[0]}, {self.size[1]})"
+
+
+class UnifyingResize:
+    def __init__(self, max_size: int):
+        self.max_size = max_size
+
+    def __call__(self, img: Image.Image) -> Image.Image:
+        h, w = img.size
+        if h < w:
+            resized = img.resize((int(self.max_size * h / w), self.max_size))
+        else:
+            resized = img.resize((self.max_size, int(self.max_size * w / h)))
+
+        return resized
+
+    def __repr__(self) -> str:
+        return f"UnifyingPad({self.max_size})"
+
+
+def _get_image(image_url: str) -> Image.Image:
+    response = requests.get(image_url, stream=True)
+    image = Image.open(BytesIO(response.content), formats=["jpeg", "png"])
+
+    return image
+
+
+default_transform = torchvision.transforms.Compose(
     [
+        UnifyingResize(800),
+        UnifyingPad(800, 800),
         torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize((0.1307,), (0.3081,)),
     ]
 )
 
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 20, kernel_size=5)
-        self.conv2 = nn.Conv2d(20, 20, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
-
-        self.fc1 = nn.Linear(320, 100)
-        self.bn1 = nn.BatchNorm1d(100)
-
-        self.fc2 = nn.Linear(100, 100)
-        self.bn2 = nn.BatchNorm1d(100)
-
-        self.smax = nn.Linear(100, 10)
-
-    def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-
-        x = x.view(-1, 320)
-        x = self.bn1(F.relu(self.fc1(x)))
-        x = F.dropout(x, training=self.training)
-
-        x = self.bn2(F.relu(self.fc2(x)))
-        x = F.dropout(x, training=self.training)
-
-        return F.softmax(self.smax(x), dim=-1)
-
-
 model_file = "/opt/ml/model"
-model = Net()
-model.load_state_dict(torch.load(model_file))
+model = torch.jit.load(model_file, map_location="cpu")
 model.eval()
 
 
 def lambda_handler(event, context):
-    image_bytes = event["body"].encode("utf-8")
-    image = Image.open(BytesIO(base64.b64decode(image_bytes))).convert(mode="L")
-    image = image.resize((28, 28))
-
-    probabilities = model.forward(
-        image_transforms(np.array(image)).reshape(-1, 1, 28, 28)
+    image_urls = (
+        json.loads(event["body"]) if isinstance(event["body"], str) else event["body"]
     )
-    label = torch.argmax(probabilities).item()
+    images = [default_transform(_get_image(image_url)) for image_url in image_urls]
+    batch = torch.stack(images)
+    preds = model.predict(batch)
 
     return {
         "statusCode": 200,
-        "body": json.dumps(
-            {
-                "predicted_label": label,
-            }
-        ),
+        "body": json.dumps(preds),
     }
