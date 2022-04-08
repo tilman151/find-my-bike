@@ -102,7 +102,7 @@ class EbayDataset(Dataset):
             aspect: list(classes.keys()) for aspect, classes in self._classes.items()
         }
 
-    def _load_meta_file(self) -> List[Tuple[str, dict[str, Any]]]:
+    def _load_meta_file(self) -> List[Tuple[str, Dict[str, Any]]]:
         meta = utils.load_meta(self.dataset_path)
         self._verify_meta(meta)
         if self.high_res is not None:
