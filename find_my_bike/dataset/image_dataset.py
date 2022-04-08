@@ -117,7 +117,8 @@ class EbayDataset(Dataset):
     def _verify_meta(self, meta: Dict[str, Dict[str, Any]]) -> None:
         aspect_set = set(self.aspects)
         for file_name, entry in meta.items():
-            if diff := aspect_set.difference(entry["labels"].keys()):
+            diff = aspect_set.difference(entry["labels"].keys())
+            if diff:
                 raise RuntimeError(f"Image '{file_name}' is missing the aspects {diff}")
 
     def _get_classes(self) -> Dict[str, Dict[str, int]]:
