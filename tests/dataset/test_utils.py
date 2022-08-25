@@ -77,11 +77,9 @@ def test_download_images_existing_meta(image_urls, fake_meta, tmpdir):
 @responses.activate
 def test_download_images_known_url_filtering(image_urls, fake_meta, tmpdir):
     fake_meta["00003.jpg"] = image_urls[0]
-    with open(os.path.join(tmpdir, "meta.json"), mode="wt") as f:
-        json.dump(fake_meta, f)
+    save_meta(tmpdir, fake_meta)
     download_images(image_urls, tmpdir)
-    with open(os.path.join(tmpdir, "meta.json"), mode="rt") as f:
-        meta = json.load(f)
+    meta = load_meta(tmpdir)
     assert len(fake_meta) + 1 == len(meta)
     assert "00004.jpg" in meta
     assert meta["00004.jpg"]["url"] == image_urls[1]["url"]
