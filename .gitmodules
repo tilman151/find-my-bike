@@ -1,0 +1,3 @@
+[submodule "scrape-my-bike"]
+	path = scrape-my-bike
+	url = git@github.com:tilman151/scrape-my-bike.git
