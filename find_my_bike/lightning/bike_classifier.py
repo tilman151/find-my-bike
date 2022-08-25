@@ -69,6 +69,7 @@ class BikeClassifier(pl.LightningModule):
         lr: float = 0.001,
         encoder_lr_factor: float = 0.0,
         optim: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        record_error_images: bool = True,
     ) -> None:
         super().__init__()
 
@@ -77,6 +78,7 @@ class BikeClassifier(pl.LightningModule):
         self.lr = lr
         self.encoder_lr_factor = encoder_lr_factor
         self.optim_type = optim
+        self.record_error_images = record_error_images
         self.ce_loss = nn.CrossEntropyLoss(ignore_index=-1)
         self.conf_mat = nn.ModuleDict(
             {
@@ -157,7 +159,8 @@ class BikeClassifier(pl.LightningModule):
         preds = self.forward(imgs)
         for aspect, pred, label in zip(self.head.aspects, preds, labels.T):
             self._update_conf_mat(aspect, pred, label)
-            self._record_error_images(aspect, pred, label, imgs, batch_idx)
+            if self.record_error_images:
+                self._record_error_images(aspect, pred, label, imgs, batch_idx)
 
     def _update_conf_mat(
         self, aspect: str, pred: torch.Tensor, label: torch.Tensor

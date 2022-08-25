@@ -91,6 +91,7 @@ def test_bike_classifier_loss_ignore_index(classifier, fake_logits, monkeypatch)
 
 
 def test_bike_classifier_confmat_ignore_index(classifier):
+    classifier.record_error_images = False  # deactivate because inputs are no images
     labels = torch.tensor([[0, 0], [-1, 0]])
     classifier.test_step((torch.zeros(2, 16), labels), 0)
     assert classifier.conf_mat["a"].confmat.sum() == 1
@@ -144,7 +145,7 @@ def test_bike_classifier_record_error_images(classifier, monkeypatch):
     preds = torch.rand(2, 2)
     labels = torch.tensor([0, 1])
     monkeypatch.setattr(classifier, "trainer", mock.MagicMock(name="trainer"))
-    classifier._record_error_images("a", preds, labels, imgs)
+    classifier._record_error_images("a", preds, labels, imgs, 0)
 
 
 def test_bike_classifier_predict(classifier, fake_logits, monkeypatch):
